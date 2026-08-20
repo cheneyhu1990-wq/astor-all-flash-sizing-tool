@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sangfor aStor-EDS All-Flash Tender Spec Tool</title>
+    <style>
+        :root {
+            --primary: #0066cc;
+            --secondary: #f0f2f5;
+            --accent: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --text-dark: #333;
+            --text-light: #666;
+            --border: #ddd;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--secondary);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            background-color: #fff;
+            padding: 20px;
+            border-bottom: 3px solid var(--primary);
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+        h2 { font-size: 1.15rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        h3 { font-size: 1rem; margin: 0 0 10px 0; }
+        .subtitle { font-size: 0.9rem; color: var(--text-light); }
+
+        .confidential-banner {
+            background-color: #fff3cd;
+            color: #664d03;
+            border-left: 4px solid var(--warning);
+            padding: 10px 16px;
+            font-size: 0.82rem;
+            margin-bottom: 16px;
+            border-radius: 4px;
+        }
+        .confidential-banner strong { color: #664d03; }
+
+        /* Cards */
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+
+        @media (max-width: 900px) {
+            .grid-2, .grid-3, .grid-4, .grid-5 { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 600px) {
+            .grid-2, .grid-3, .grid-4, .grid-5 { grid-template-columns: 1fr; }
+        }
+
+        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.85rem; }
+        .note { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
+
+        select, input[type="number"], input[type="text"], input[type="search"] {
+            width: 100%;
+            padding: 9px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            font-weight: normal;
+        }
+        .checkbox-group input { width: auto; }
+
+        /* Chips */
+        .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 12px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: #f8f9fa;
+            font-size: 0.78rem;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .chip:hover { background: #e9ecef; }
+        .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .chip .cnt { opacity: 0.75; margin-left: 4px; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid var(--border); padding: 8px; text-align: left; font-size: 0.85rem; vertical-align: top; }
+        th { background-color: #f8f9fa; color: var(--text-dark); position: sticky; top: 0; z-index: 2; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+        tbody tr:hover { background-color: #f1f7ff; }
+
+        .selected-row { background-color: #e6f2ff !important; }
+        .selected-row td:first-child { border-left: 4px solid var(--primary); }
+
+        .table-scroll { max-height: 640px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
+        .table-scroll table { margin-top: 0; }
+
+        td.center, th.center { text-align: center; }
+
+        /* Indicators */
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: bold;
+            color: white;
+            white-space: nowrap;
+        }
+        .tag-rec { background-color: var(--accent); }
+        .tag-warn { background-color: var(--warning); color: #333; }
+        .tag-err { background-color: var(--danger); }
+        .tag-neutral { background-color: #6c757d; }
+
+        .status-dot {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #fff;
+        }
+        .status-meet { background-color: var(--accent); }
+        .status-not { background-color: var(--danger); }
+        .status-unk { background-color: #adb5bd; }
+
+        .stars { color: #f0ad4e; letter-spacing: 1px; font-size: 0.85rem; white-space: nowrap; }
+        .stars.zero { color: #ccc; }
+
+        .demo-yes { color: var(--primary); font-weight: 600; font-size: 0.78rem; }
+        .demo-no { color: var(--text-light); font-size: 0.78rem; }
+
+        .req-text { max-width: 340px; }
+        .req-toggle { color: var(--primary); cursor: pointer; font-size: 0.78rem; margin-top: 4px; display: inline-block; }
+        .req-clamped {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .note-box {
+            background: #fff8e6;
+            border-left: 3px solid var(--warning);
+            padding: 8px 10px;
+            font-size: 0.78rem;
+            margin-top: 6px;
+            border-radius: 3px;
+            max-width: 320px;
+            display: none;
+        }
+        .note-box.open { display: block; }
+        .note-toggle {
+            color: #b8860b;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .docref { font-size: 0.72rem; color: var(--text-light); margin-top: 4px; }
+
+        /* Cart / output box */
+        .output-box {
+            background-color: #2c3e50;
+            color: #fff;
+            padding: 18px 20px;
+            border-radius: 8px;
+            position: sticky;
+            top: 16px;
+        }
+        .output-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #34495e;
+            padding-bottom: 6px;
+            font-size: 0.85rem;
+        }
+        .output-row:last-child { border-bottom: none; }
+        .output-val { font-weight: bold; color: #4dabf7; }
+
+        .btn {
+            display: inline-block;
+            padding: 9px 16px;
+            border-radius: 5px;
+            border: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            width: 100%;
+            margin-top: 8px;
+        }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: #0052a3; }
+        .btn-secondary { background: #34495e; color: #fff; }
+        .btn-secondary:hover { background: #2c3e50; }
+        .btn-outline { background: transparent; color: #fff; border: 1px solid #556; }
+        .btn-outline:hover { background: #34495e; }
+        .btn-sm { width: auto; padding: 5px 10px; font-size: 0.75rem; margin-top: 0; }
+
+        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+        .toolbar .btn { width: auto; margin-top: 0; }
+
+        .cart-list { max-height: 300px; overflow-y: auto; margin-top: 4px; }
+        .cart-item {
+            font-size: 0.78rem;
+            padding: 6px 0;
+            border-bottom: 1px solid #34495e;
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+        }
+        .cart-item .remove { cursor: pointer; color: #ff8080; font-weight: bold; flex-shrink: 0; }
+        .empty-cart { font-size: 0.8rem; color: #9aa; padding: 10px 0; }
+
+        footer { text-align: center; font-size: 0.78rem; color: var(--text-light); margin-top: 32px; padding-bottom: 20px; }
+
+        .alert {
+            padding: 10px 12px;
+            background-color: #e2e3e5;
+            border-left: 4px solid #383d41;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            border-radius: 3px;
+        }
+
+        .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.78rem; color: var(--text-light); margin-top: 8px; align-items: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+
+        .results-count { font-size: 0.82rem; color: var(--text-light); margin-top: 6px; }
+
+        .copy-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #2c3e50;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.25s ease;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .copy-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        .col-check { width: 32px; }
+        .col-star { width: 60px; }
+        .col-demo { width: 60px; }
+        .col-status { width: 46px; }
+
+        .main-layout { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
+        @media (max-width: 1100px) {
+            .main-layout { grid-template-columns: 1fr; }
+            .output-box { position: static; }
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>Sangfor aStor-EDS All-Flash &mdash; Tender Specification Tool</h1>
+            <div class="subtitle">Bid Requirement Selector &amp; Competitive Reference (Based on EDS V5.3.0 Control Guide)</div>
+        </div>
+        <div style="text-align:right;">
+            <span style="font-size: 0.8rem; color: #666;">Source: EDS All-Flash Tender Parameter Guide, V1.0 &middot; 2026-04-16</span>
+        </div>
+    </header>
+
+    <div class="confidential-banner">
+        <strong>Internal Use Only &mdash; Do Not Distribute Externally.</strong>
+        This tool reproduces Sangfor's internal EDS bid-control reference material for use by Sangfor regional sales and pre-sales teams only. Competitive positioning notes are internal guidance and must never be shared with customers, partners, or tendering agents.
+    </div>
+    <div class="card">
+        <h2>1. Filter &amp; Search Requirements</h2>
+        <div class="grid-4">
+            <div>
+                <label for="searchBox">Search (item, requirement, or note)</label>
+                <input type="search" id="searchBox" placeholder="e.g. pNFS, compression, quota..." oninput="renderTable()">
+            </div>
+            <div>
+                <label for="demoFilter">On-Site Demo</label>
+                <select id="demoFilter" onchange="renderTable()">
+                    <option value="all">All Requirements</option>
+                    <option value="yes">Demo-Capable Only</option>
+                    <option value="no">Not Demo-Capable</option>
+                </select>
+            </div>
+            <div>
+                <label for="priorityFilter">Priority Level</label>
+                <select id="priorityFilter" onchange="renderTable()">
+                    <option value="all">All Priorities</option>
+                    <option value="3">&#9733;&#9733;&#9733; Strategic (Sole-Source Potential)</option>
+                    <option value="2">&#9733;&#9733; High Priority</option>
+                    <option value="1">&#9733; Elevated Priority</option>
+                    <option value="0">Standard / Baseline</option>
+                </select>
+            </div>
+            <div>
+                <label for="gapFilter">Competitive Gap</label>
+                <select id="gapFilter" onchange="renderTable()">
+                    <option value="all">All Items</option>
+                    <option value="anygap">Any Competitor Fails to Meet</option>
+                    <option value="allgap">All 4 Competitors Fail to Meet</option>
+                </select>
+            </div>
+        </div>
+        <div>
+            <label style="margin-top:12px;">Category</label>
+            <div class="chip-row" id="categoryChips"></div>
+        </div>
+        <div class="legend">
+            <div class="legend-item"><span class="status-dot status-meet">&#10003;</span> Meets requirement</div>
+            <div class="legend-item"><span class="status-dot status-not">&times;</span> Does not meet</div>
+            <div class="legend-item"><span class="status-dot status-unk">?</span> Unconfirmed / unknown</div>
+            <div class="legend-item"><span class="stars">&#9733;&#9733;&#9733;</span> = strategic differentiator, use with care re: sole-source risk</div>
+        </div>
+        <div class="results-count" id="resultsCount"></div>
+    </div>
+
+    <div class="main-layout">
+        <div class="card" style="margin-bottom:0;">
+            <h2>2. Requirement Library</h2>
+            <div class="toolbar">
+                <button class="btn btn-primary btn-sm" onclick="selectAllVisible()">Select All Visible</button>
+                <button class="btn btn-secondary btn-sm" onclick="clearVisible()">Deselect Visible</button>
+                <span class="note" style="margin-left:auto;">Click a row, or its checkbox, to add it to your tender spec draft.</span>
+            </div>
+            <div class="table-scroll">
+                <table id="specTable">
+                    <thead>
+                        <tr>
+                            <th class="col-check"></th>
+                            <th>Category</th>
+                            <th>Requirement Item</th>
+                            <th class="req-text">Requirement Text (Suggested Tender Wording)</th>
+                            <th class="col-star center">Priority</th>
+                            <th class="col-demo center">Demo</th>
+                            <th class="col-status center">SF</th>
+                            <th class="col-status center">XSKY</th>
+                            <th class="col-status center">Huawei</th>
+                            <th class="col-status center">Inspur</th>
+                            <th class="col-status center">H3C</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="output-box">
+            <h3 style="color:#fff; margin-bottom:12px;">Selected Tender Specs</h3>
+            <div class="output-row">
+                <span>Items Selected</span>
+                <span class="output-val" id="cartCount">0</span>
+            </div>
+            <div class="output-row">
+                <span>Strategic (&#9733;&#9733;&#9733;) Items</span>
+                <span class="output-val" id="cartStrategic">0</span>
+            </div>
+            <div class="cart-list" id="cartList">
+                <div class="empty-cart">No requirements selected yet. Browse the library and click a row to add it here.</div>
+            </div>
+            <button class="btn btn-primary" onclick="copySelected(false)">Copy Spec Text (Clean)</button>
+            <button class="btn btn-outline" onclick="copySelected(true)">Copy with Internal Notes</button>
+            <button class="btn btn-outline" onclick="downloadSelected()">Download as .txt</button>
+            <button class="btn btn-secondary" onclick="clearCart()">Clear All</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>3. Notes for Sales &amp; Pre-Sales Use</h2>
+        <div class="alert">
+            <strong>How to use this tool:</strong> Filter or search the requirement library, then select the parameters relevant to your opportunity. The exported "Clean" text gives you customer-ready tender wording (English) for handoff to the account or bid team. The "with Internal Notes" export additionally includes the internal competitive-positioning rationale for each item &mdash; for internal review only, never for external distribution. Always validate current product capability with EDS Product Management (V5.3.0 guide) before finalizing a bid, since competitor capabilities and product versions change over time.
+        </div>
+        <div class="note">Competitor comparison covers XSKY, Huawei (OceanStor Dorado), Inspur, and H3C (UniStor), as tracked in the source guide. Status reflects the source document as of 2026-04-16 and should be reconfirmed for time-sensitive or high-value bids.</div>
+    </div>
+
+    <footer>
+        Sangfor aStor-EDS All-Flash Tender Specification Tool &middot; Internal Sales &amp; Pre-Sales Enablement &middot; Not for External Distribution
+    </footer>
+</div>
+
+<div class="copy-toast" id="copyToast">Copied to clipboard</div>
+
+<script>
+const DATA = [{"cat": "Hardware Configuration", "item": "aStor-EDS-F3000T", "priority": 0, "demo": false, "req": "Per-chassis configuration: Processor ≥ 2x x86 CPUs, ≥12 cores each, ≥2.4GHz, providing ≥24 hot-swap U.2 bays. Memory: ≥32GB×4 (DDR5-5600MHz), ≥16 DIMM slots. System disk: ≥2×960GB NVMe SSD, 1DWPD×5yr. Data disk: ≥xx × xx TB dual-port PCIe 4.0/5.0 NVMe SSD, 1DWPD×5yr. Network ports: ≥4×1GE, ≥xx × xx GE/FC/IB. Power: ≥2 hot-swap redundant PSUs, ≥6 hot-swap redundant fans.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": "Configure per the actual project sizing requirements.", "docref": null, "id": 1}, {"cat": "Hardware Configuration", "item": "aStor-EDS-F6000T", "priority": 0, "demo": false, "req": "Per-chassis configuration: Processor ≥ 2x x86 CPUs, ≥28 cores each, ≥2.1GHz, providing ≥24 hot-swap U.2 bays. Memory: ≥32GB×8 (DDR5-5600MHz), ≥16 DIMM slots. System disk: ≥2×960GB NVMe SSD, 1DWPD×5yr. Data disk: ≥xx × xx TB dual-port PCIe 4.0/5.0 NVMe SSD, 1DWPD×5yr. Network ports: ≥4×1GE, ≥xx × xx GE/FC/IB. Power: ≥2 hot-swap redundant PSUs, ≥6 hot-swap redundant fans.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": "Configure per the actual project sizing requirements.", "docref": null, "id": 2}, {"cat": "Hardware Configuration", "item": "aStor-EDS-F3000Q", "priority": 0, "demo": false, "req": "Per-chassis configuration: Processor ≥ 2x x86 CPUs, ≥12 cores each, ≥2.4GHz, providing ≥24 hot-swap U.2 bays. Memory: ≥32GB×4 (DDR5-5600MHz), ≥16 DIMM slots. System disk: ≥2×960GB NVMe SSD, 1DWPD×5yr. Data disk: ≥xx × xx TB dual-port PCIe 4.0/5.0 NVMe SSD, 1DWPD×5yr. Network ports: ≥4×1GE, ≥xx × xx GE/FC/IB. Power: ≥2 hot-swap redundant PSUs, ≥6 hot-swap redundant fans.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": "Configure per the actual project sizing requirements.", "docref": null, "id": 3}, {"cat": "Hardware Configuration", "item": "aStor-EDS-F6000Q", "priority": 0, "demo": false, "req": "Per-chassis configuration: Processor ≥ 2x x86 CPUs, ≥28 cores each, ≥2.1GHz, providing ≥24 hot-swap U.2 bays. Memory: ≥32GB×8 (DDR5-5600MHz), ≥16 DIMM slots. System disk: ≥2×960GB NVMe SSD, 1DWPD×5yr. Data disk: ≥xx × xx TB dual-port PCIe 4.0/5.0 NVMe SSD, 1DWPD×5yr. Network ports: ≥4×1GE, ≥xx × xx GE/FC/IB. Power: ≥2 hot-swap redundant PSUs, ≥6 hot-swap redundant fans.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": "Configure per the actual project sizing requirements.", "docref": null, "id": 4}, {"cat": "Hardware Configuration", "item": "Host Interfaces", "priority": 0, "demo": false, "req": "Provides a rich set of front-end host interface types — 32G FC, 10/25GE TCP/IP, 25/100/200GE RoCE, and 200/400G IB — to meet the connectivity needs of different hosts and enable high-speed data transfer. Front-end interfaces across multiple controllers can work cooperatively to share host I/O load.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": null, "id": 5}, {"cat": "Hardware Configuration", "item": "Battery-Free (No-BBU) Memory Design", "priority": 3, "demo": false, "req": "Uses a battery-free memory hardware design, eliminating the traditional reliance on a backup battery to keep memory powered. This avoids storage outages caused by battery depletion, aging, or charging faults; prevents performance fluctuations during battery-backed memory failover; and ensures read/write performance remains at a stable peak to meet high-concurrency workload demands.", "sf": "meet", "xsky": "not", "hw": "meet", "inspur": "not", "h3c": "meet", "note": "Can be used to constrain traditional all-flash array vendors (e.g., Dell, NetApp). Only two other domestically-known products currently use a confirmed battery-free memory architecture: (1) Huawei OceanStor Dorado All-Flash (V6+) — write-cache data is flushed directly to the PMR area of NVMe SSDs, no battery/NVDIMM required; (2) H3C UniStor CF22000 All-Flash — uses Intel Optane NVMe SCM drives as a persistent write-cache tier, eliminating traditional capacitors.", "docref": null, "id": 6}, {"cat": "Hardware Configuration", "item": "Memory Requirement", "priority": 1, "demo": false, "req": "To meet the growth in data volume and concurrent-processing demand of core business systems over the next 3–5 years, and to support performance for in-memory databases, real-time analytics, and similar applications, the maximum configurable physical memory per controller must be ≥256GB. An official product specification sheet must be provided as proof.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": "This clause directly caps out Huawei's Dorado 3000, which tops out at 192GB of memory. If Huawei switches to a higher-end Dorado 5000/6000 series to meet the requirement, its cost rises sharply, eroding its price advantage. Sangfor is competitive at this memory tier.", "docref": null, "id": 7}, {"cat": "Hardware Configuration", "item": "Disk Requirement", "priority": 1, "demo": false, "req": "To guarantee low-latency I/O response and high throughput for mission-critical workloads, both the front-end and back-end interfaces of the storage system must support the NVMe protocol, and all configured SSDs must be native NVMe-interface SSDs. SAS-interface SSDs are not accepted.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": "Excludes configurations built on SAS SSDs. Huawei's Dorado 3000 supports NVMe, but requiring an all-NVMe configuration removes the cost advantage it would otherwise gain by mixing in SAS SSDs.", "docref": null, "id": 8}, {"cat": "Basic Requirements", "item": "Intellectual Property", "priority": 0, "demo": false, "req": "Must be a well-known domestic manufacturer; not an OEM product, not a jointly-developed product; open-source products are not accepted. Must be fully self-developed, with proof of independent IP for the distributed storage system, including but not limited to software copyrights and invention patents.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 1.1", "id": 9}, {"cat": "Basic Requirements", "item": "Delivery Model", "priority": 0, "demo": false, "req": "To ensure system stability, the bid product must be delivered as an integrated storage appliance, with both hardware and software supplied by the same manufacturer. Pure-software bids paired with third-party servers are not accepted.", "sf": "meet", "xsky": "unk", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": "Can be used to raise XSKY's cost of compliance.", "docref": null, "id": 10}, {"cat": "System Architecture", "item": "System Architecture", "priority": 0, "demo": false, "req": "Active-Active dual-controller, fully redundant architecture. Upon failure of either controller, the I/O path fails over automatically and rapidly, with zero perceptible impact and zero interruption to front-end business. Software is licensed on a unified, capacity-based basis, with a single license covering all advanced features of the all-flash array.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": null, "id": 11}, {"cat": "System Architecture", "item": "Unified Storage", "priority": 0, "demo": true, "req": "Starts from a single unit; the same system provides block and file storage services simultaneously under unified management, with flexible resource allocation.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": "Object storage is not yet supported in v5.3.0.", "docref": "EDS Tender Parameter Screenshots, Sec. 2.1", "id": 12}, {"cat": "System Architecture", "item": "Scalability", "priority": 0, "demo": true, "req": "Without downtime, the cluster can scale flexibly — either by adding controller-node chassis to the cluster, or by adding drives within a node — without interrupting business.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 2.2", "id": 13}, {"cat": "System Architecture", "item": "High-Availability Access", "priority": 0, "demo": true, "req": "Supports creating multiple virtual IP pools, enabling high-availability access for client clusters spanning multiple, different IP subnets.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": null, "id": 14}, {"cat": "System Architecture", "item": "Load Balancing", "priority": 0, "demo": true, "req": "Built-in DNS load balancing: the storage system automatically selects the appropriate node to respond to client DNS requests, balancing client access load across the storage cluster.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 2.3", "id": 15}, {"cat": "Performance", "item": "Block Storage Performance", "priority": 0, "demo": false, "req": "Per-node block-storage performance: 8K read IOPS ≥ 1,000,000; 8K write IOPS ≥ 350,000.", "sf": "meet", "xsky": "unk", "hw": "unk", "inspur": "unk", "h3c": "unk", "note": "Requires F6000T hardware configuration, PCIe 5.0 NVMe ×24 drives, 2×25GE per controller on the front-end network.", "docref": "EDS Tender Parameter Screenshots, Sec. 3.1", "id": 16}, {"cat": "Performance", "item": "File Storage Performance", "priority": 0, "demo": false, "req": "File-storage performance: 8K file write IOPS ≥ 200,000; 8K file read IOPS ≥ 300,000.", "sf": "meet", "xsky": "unk", "hw": "unk", "inspur": "unk", "h3c": "unk", "note": "Requires F6000T hardware configuration, PCIe 5.0 NVMe ×24 drives, 2×25GE per controller on the front-end network. Note: specify an 8K file size explicitly — if a competitor benchmarks with large files (e.g., 8K reads against a 200MB file), the reported figure will be artificially inflated.", "docref": "EDS Tender Parameter Screenshots, Sec. 3.2", "id": 17}, {"cat": "File Storage", "item": "File Storage Interfaces", "priority": 0, "demo": true, "req": "Simultaneously provides NFS, CIFS, and FTP storage interfaces with no need to install plug-ins at the application layer, reducing application-side modification cost and meeting the interface needs of different application systems.", "sf": "meet", "xsky": "not", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 4.1", "id": 18}, {"cat": "File Storage", "item": "Global Namespace", "priority": 0, "demo": false, "req": "Provides a single, unified global namespace; storage resources across all nodes are consolidated into one large-capacity file storage space with fully shared resources, avoiding waste from pre-partitioned capacity. Any data in the file system can be read and written through any node.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 4.2", "id": 19}, {"cat": "File Storage", "item": "Cross-Protocol Interoperability", "priority": 0, "demo": false, "req": "The same file data can be accessed through different native storage interfaces (NFS, CIFS, FTP), enabling cross-protocol and cross-interface file data sharing.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 4.3", "id": 20}, {"cat": "File Storage", "item": "Directory Quotas", "priority": 0, "demo": true, "req": "File storage supports quota management at the directory level, limiting both capacity and file count.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": "EMC does not support file-count-based quotas.", "docref": "EDS Tender Parameter Screenshots, Sec. 4.4", "id": 21}, {"cat": "File Storage", "item": "User Quotas", "priority": 3, "demo": true, "req": "File storage supports setting default quotas for local users/groups and domain users/groups, limiting per-user capacity or file-count usage, to prevent individual users or workloads from monopolizing storage resources at the expense of others.", "sf": "meet", "xsky": "not", "hw": "meet", "inspur": "meet", "h3c": "not", "note": "(1) EMC does not support file-count-based quotas. (2) H3C does not support quotas for AD/LDAP/NIS domain users — local users only. (3) XSKY supports user quotas (local, AD, LDAP) only via CIFS; NFS user quotas are not supported.", "docref": "EDS Tender Parameter Screenshots, Sec. 4.5", "id": 22}, {"cat": "File Storage", "item": "File Data Protection — Directory Snapshots", "priority": 1, "demo": true, "req": "Configurable snapshotting at any directory level, including simultaneous snapshots of a directory and its subdirectories; minimum scheduled snapshot interval of 15 minutes; supports ≥20,000 snapshots. Supports snapshot renaming and file-level recovery from any snapshot point.", "sf": "meet", "xsky": "not", "hw": "not", "inspur": "unk", "h3c": "meet", "note": "Require screenshot evidence for this item — raises competitors' cost of compliance.", "docref": "EDS Tender Parameter Screenshots, Sec. 4.6.1", "id": 23}, {"cat": "File Storage", "item": "File Data Protection — WORM", "priority": 0, "demo": true, "req": "Supports enabling WORM protection on folders, with configurable retention periods, providing write protection for critical data to prevent virus damage or unauthorized tampering. Includes a built-in, independent WORM clock so protected files cannot exit protected status early due to system time changes.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 4.6.2", "id": 24}, {"cat": "File Storage", "item": "File Data Protection — Recycle Bin", "priority": 1, "demo": true, "req": "Supports enabling a per-directory recycle bin, so that files or directories deleted by users or malware can be quickly recovered. The recycle bin supports multiple policies (file size, retention period, blacklist, etc.).", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 4.6.3", "id": 25}, {"cat": "File Storage", "item": "Access Authentication — Local/AD", "priority": 0, "demo": true, "req": "Supports local user permission management, or integration with an AD domain controller for user permission management.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 4.7", "id": 26}, {"cat": "File Storage", "item": "Access Authentication — NT-ACL / POSIX-ACL", "priority": 0, "demo": true, "req": "Supports configuring Windows NT-ACL and POSIX-ACL permissions from the storage console, reducing network latency and improving the efficiency of file permission management.", "sf": "meet", "xsky": "not", "hw": "meet", "inspur": "meet", "h3c": "not", "note": "(1) H3C does not support NT-ACL or POSIX-ACL. (2) XSKY does not support fine-grained NT-ACL permission management in its UI.", "docref": null, "id": 27}, {"cat": "File Storage", "item": "Access Authentication — Subdirectory Sharing", "priority": 0, "demo": true, "req": "Supports sharing subdirectories of the file system to host clients individually via CIFS/NFS/FTP, with access permissions set independently from the root directory, enabling fine-grained access control and reducing security risk.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": null, "id": 28}, {"cat": "File Storage", "item": "Access Authentication — IP Whitelist", "priority": 0, "demo": true, "req": "Supports configuring an access whitelist so that only client IP addresses on the list can access a shared directory, with per-client permission configuration.", "sf": "meet", "xsky": "not", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": null, "id": 29}, {"cat": "File Storage", "item": "File Compression", "priority": 3, "demo": true, "req": "To reduce long-term data retention costs, file storage must provide data-reduction capability, supporting directory-level compression policies with a choice of capacity-priority or performance-priority strategy, and the ability to view the amount of data compressed. (Provide product screenshots or supporting evidence.)", "sf": "meet", "xsky": "not", "hw": "unk", "inspur": "unk", "h3c": "not", "note": "H3C and XSKY do not support directory-level file compression — only storage-pool-level compression.", "docref": "EDS Tender Parameter Screenshots, Sec. 4.8", "id": 30}, {"cat": "File Storage", "item": "File Auditing", "priority": 0, "demo": true, "req": "Supports file auditing, allowing the management platform to display logs of file upload, copy, rename, and delete operations, enabling traceability when file-state anomalies occur.", "sf": "meet", "xsky": "unk", "hw": "unk", "inspur": "unk", "h3c": "unk", "note": "Lenovo does not support file auditing.", "docref": "EDS Tender Parameter Screenshots, Sec. 4.9", "id": 31}, {"cat": "File Storage", "item": "Balanced Metadata Distribution", "priority": 1, "demo": false, "req": "To achieve higher performance under high-concurrency scenarios, supports evenly distributing metadata access requests for a given directory across multiple metadata services (MDS) on multiple nodes in the cluster.", "sf": "meet", "xsky": "not", "hw": "meet", "inspur": "not", "h3c": "meet", "note": null, "docref": null, "id": 32}, {"cat": "File Storage", "item": "Incremental File Backup Interface", "priority": 1, "demo": true, "req": "Supports providing an incremental/differential file-scan interface for third-party backup software, addressing the long backup windows caused by full scans and reducing the impact of backup jobs on storage performance.", "sf": "meet", "xsky": "not", "hw": "meet", "inspur": "unk", "h3c": "not", "note": "H3C and XSKY do not support an incremental-backup interface.", "docref": "EDS Tender Parameter Screenshots, Sec. 4.10", "id": 33}, {"cat": "File Storage", "item": "NFS Multipathing", "priority": 1, "demo": true, "req": "To resolve the single-link performance bottleneck of NFS, requires NFS multipathing support, with multiple access paths established on both host and storage sides, significantly improving access performance in single-client scenarios.", "sf": "meet", "xsky": "not", "hw": "meet", "inspur": "not", "h3c": "not", "note": "Currently, only Sangfor and Huawei are known to support NFS multipathing among domestic vendors.", "docref": "EDS Tender Parameter Screenshots, Sec. 4.11", "id": 34}, {"cat": "File Storage", "item": "pNFS (Parallel NFS)", "priority": 3, "demo": true, "req": "To meet the throughput requirements of high-concurrency scenarios such as AI and HPC, the bid storage product must support standard pNFS v4.2, enabling parallel access to all storage nodes without a proprietary client, improving overall throughput.", "sf": "meet", "xsky": "not", "hw": "not", "inspur": "not", "h3c": "not", "note": "Among mainstream domestic storage vendors, only Sangfor is currently known to support this. Other known adopters: Boya Cloud OneSTOR (yun88.com/product/8748.html) and Hammerspace (hammerspace.com/parallel-nfs/).", "docref": "EDS Tender Parameter Screenshots, Sec. 4.12", "id": 35}, {"cat": "Block Storage", "item": "Interface Support", "priority": 0, "demo": false, "req": "Supports iSCSI, NVMe over RoCEv2, NVMe over TCP, and NVMe over FC block-storage interfaces.", "sf": "meet", "xsky": "unk", "hw": "unk", "inspur": "unk", "h3c": "unk", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 5.1", "id": 36}, {"cat": "Block Storage", "item": "Access Authentication — CHAP", "priority": 0, "demo": false, "req": "Supports configuring CHAP authentication, with one-way, two-way, and no-authentication modes.", "sf": "meet", "xsky": "unk", "hw": "unk", "inspur": "unk", "h3c": "unk", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 5.2", "id": 37}, {"cat": "Block Storage", "item": "Scheduled Snapshots", "priority": 1, "demo": true, "req": "Provides scheduled snapshot protection, supporting point-in-time or interval-based snapshot policies for a LUN or consistency group, enabling local scheduled data backup.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 5.3", "id": 38}, {"cat": "Block Storage", "item": "Consistency-Group Snapshots", "priority": 0, "demo": true, "req": "Provides consistency-group snapshots, supporting the grouping of multiple LUNs into a consistency group and creating consistency-group snapshots, for database data protection.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "not", "h3c": "meet", "note": "Inspur does not support consistency-group snapshots.", "docref": "EDS Tender Parameter Screenshots, Sec. 5.3", "id": 39}, {"cat": "Block Storage", "item": "Multipathing", "priority": 0, "demo": false, "req": "Block storage must support multipath access for Windows, Linux, VMware, Sangfor HCI, and similar systems, with multi-link load balancing and high-availability access.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": null, "id": 40}, {"cat": "Data Mobility", "item": "Data Tiering", "priority": 1, "demo": false, "req": "To make efficient use of all-flash storage while balancing performance and cost against large-capacity hybrid-flash storage, the bid product must support data tiering, with configurable policies to move data from the all-flash tier to external file storage, object storage, or cloud storage. Tiered data is not deleted immediately from the all-flash tier — a read-cache copy remains to support fast access, and is evicted only once access frequency drops. Cold data can be pre-warmed back to the all-flash tier from external object storage when needed.", "sf": "meet", "xsky": "not", "hw": "not", "inspur": "not", "h3c": "not", "note": "Currently, only Sangfor is known to retain a read-cache copy on the all-flash tier after tiering, evicting it based on access-frequency conditions.", "docref": "EDS Tender Parameter Screenshots, Sec. 6.1", "id": 41}, {"cat": "Data Mobility", "item": "Data Replication", "priority": 1, "demo": false, "req": "To avoid extended business downtime and enable smooth migration, the bid all-flash storage must support loading data from existing hybrid-flash storage via incremental replication, and allow full business cutover to the all-flash system once replication is complete.", "sf": "meet", "xsky": "not", "hw": "not", "inspur": "not", "h3c": "not", "note": "Applies to scenarios where a customer previously purchased hybrid-flash EDS and is now expanding with all-flash EDS.", "docref": "EDS Tender Parameter Screenshots, Sec. 6.2", "id": 42}, {"cat": "Data Mobility", "item": "Data Loading", "priority": 0, "demo": false, "req": "Supports data loading — data can be loaded from existing object storage, file storage, or cloud storage into all-flash file storage, with configurable execution schedule, time window, and bandwidth limits.", "sf": "meet", "xsky": "unk", "hw": "unk", "inspur": "unk", "h3c": "unk", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 6.3", "id": 43}, {"cat": "Reliability", "item": "Host & Drive Failure Tolerance", "priority": 0, "demo": false, "req": "Supports N+2 erasure coding, up to 20+2, with the usable-capacity ratio scaling automatically up to 91% as drive count increases; supports continued online access with no data loss even under dual-drive failure.", "sf": "meet", "xsky": "unk", "hw": "unk", "inspur": "unk", "h3c": "unk", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 7.1", "id": 44}, {"cat": "Reliability", "item": "Drive Sub-Health Detection", "priority": 1, "demo": false, "req": "Supports predictive sub-health detection of drives, automatic fault handling, scheduled bad-sector scanning, and silent-error detection — enabling early prediction of drive failure risk, preparation for hardware replacement, and on-screen alerts.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "not", "note": "H3C does not support this.", "docref": "EDS Tender Parameter Screenshots, Sec. 7.2", "id": 45}, {"cat": "Reliability", "item": "Slow-Drive Detection & Isolation", "priority": 0, "demo": false, "req": "Supports detecting and isolating degraded/slow-responding drives, preventing them from impacting overall cluster performance and business experience.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "not", "note": null, "docref": null, "id": 46}, {"cat": "Reliability", "item": "Data Rebuild", "priority": 0, "demo": false, "req": "Supports data rebuild with configurable recovery policies, avoiding I/O performance contention during rebuild that could impact business, and supports scheduling rebuild during idle periods to avoid impacting business during rebalancing.", "sf": "meet", "xsky": "meet", "hw": "not", "inspur": "not", "h3c": "not", "note": "Huawei, Inspur, and H3C show no evidence of intelligent rate-limiting for data rebuild.", "docref": "EDS Tender Parameter Screenshots, Sec. 7.3", "id": 47}, {"cat": "Reliability", "item": "Anti-Ransomware — Built-in Engine", "priority": 3, "demo": true, "req": "For business-security purposes and to avoid additional financial loss, the storage product must provide ransomware protection with a built-in, free anti-virus engine, supporting pre-infection ransomware protection, automatic snapshotting upon infection (or suspected infection), and safe post-infection file recovery — effectively defending against ransomware. (Provide product screenshots or supporting evidence.)", "sf": "meet", "xsky": "not", "hw": "meet", "inspur": "not", "h3c": "not", "note": "(1) XSKY achieves anti-ransomware capability only through a third-party software partnership — it is not built in. (2) This capability is free on EDS with no additional licensed module required; the clause can raise Huawei's cost of compliance since it must offer an equivalent capability. (3) Aside from Huawei, two other traditional storage vendors with a built-in antivirus engine are Synology (DSM AntiVirus McAfee package) and QNAP (secure-storage solution).", "docref": "EDS Tender Parameter Screenshots, Sec. 7.4", "id": 48}, {"cat": "Reliability", "item": "Anti-Ransomware — Behavioral Detection", "priority": 1, "demo": true, "req": "The storage product must maintain an internal database of ransomware file extensions, enabling real-time detection of ransomware and direct blocking of suspicious file creation. It must monitor and analyze data behavior on the business system side in real time, intelligently identify threat events, create ransomware-protection snapshots, and promptly alert administrators. If malware is detected, the system must use file audit logs to locate affected file paths and restore damaged data from snapshots.", "sf": "meet", "xsky": "not", "hw": "meet", "inspur": "not", "h3c": "not", "note": null, "docref": null, "id": 49}, {"cat": "Operations & Management", "item": "Administrator Role Tiers", "priority": 0, "demo": true, "req": "Supports assigning administrators either full-control or read-only permissions, enabling controlled access in multi-administrator scenarios.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": null, "id": 50}, {"cat": "Operations & Management", "item": "Log Management", "priority": 0, "demo": false, "req": "Automatically collects logs and alerts from all related components, and provides operation-log auditing.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": null, "id": 51}, {"cat": "Operations & Management", "item": "LUN / Host Topology Monitoring", "priority": 0, "demo": true, "req": "Supports topology display of block-storage LUNs and hosts, showing the current mapping between authorized servers and LUNs for easy viewing and fault localization.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 8.1.1", "id": 52}, {"cat": "Operations & Management", "item": "Client Connection Monitoring", "priority": 1, "demo": true, "req": "Supports viewing the number of file-system client connections (CIFS/NFS/FTP) and detailed per-connection information (OPS/bandwidth, latency, metadata OPS, metadata latency), helping administrators view client access patterns, identify access hotspots, and quickly localize business access issues. (Provide product screenshots or supporting evidence.)", "sf": "meet", "xsky": "not", "hw": "not", "inspur": "not", "h3c": "not", "note": "(1) Metadata-level monitoring is an EDS-exclusive parameter; if concerned about being challenged as sole-source, this item can be removed depending on the actual project. (2) Neither H3C nor XSKY supports per-client monitoring; Huawei does.", "docref": "EDS Tender Parameter Screenshots, Sec. 8.1.2", "id": 53}, {"cat": "Operations & Management", "item": "Directory-Level Performance Monitoring", "priority": 1, "demo": true, "req": "Supports monitoring storage performance at the file-directory level, with visualization and trend tracking of bandwidth, latency, OPS, metadata OPS, and metadata latency for shared directories, effectively supporting root-cause investigation of business issues. (Provide product screenshots or supporting evidence.)", "sf": "meet", "xsky": "not", "hw": "not", "inspur": "not", "h3c": "not", "note": "(1) Metadata-level monitoring is an EDS-exclusive parameter; if concerned about being challenged as sole-source, this item can be removed depending on the actual project. (2) H3C can support directory-granularity monitoring only with directory QoS enabled.", "docref": null, "id": 54}, {"cat": "Operations & Management", "item": "Storage Hardware Monitoring", "priority": 0, "demo": true, "req": "Supports monitoring and dashboard display of CPU, memory, drive, and NIC status for the hardware platform, and can query historical per-drive performance data (IOPS, throughput, I/O latency). Simulates the physical server and shows hardware-fault indicator lights (e.g., drive failure) on the monitoring UI.", "sf": "meet", "xsky": "meet", "hw": "not", "inspur": "meet", "h3c": "meet", "note": "Huawei does not support historical performance monitoring for individual drives.", "docref": "EDS Tender Parameter Screenshots, Sec. 8.2", "id": 55}, {"cat": "Operations & Management", "item": "Cluster Health Inspection", "priority": 0, "demo": true, "req": "Supports one-click inspection of the cluster resource environment, checking hardware health and the operating status/configuration of underlying platform services across multiple dimensions, with quick issue localization to ensure the system stays in optimal condition.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 8.3", "id": 56}, {"cat": "Operations & Management", "item": "Custom Branding", "priority": 1, "demo": true, "req": "Supports customizing the storage management UI, including custom company logo, background image, and platform description. Provide product UI screenshots stamped with the manufacturer's official seal.", "sf": "meet", "xsky": "not", "hw": "not", "inspur": "not", "h3c": "not", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 8.4", "id": 57}, {"cat": "Operations & Management", "item": "VLAN Sub-interfaces", "priority": 0, "demo": true, "req": "Supports configuring VLAN sub-interfaces on the storage front-end network, enabling VLAN-based network isolation across business departments — without changing the network environment or adding NICs — while still allowing simultaneous access to shared EDS storage.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 8.5", "id": 58}, {"cat": "Operations & Management", "item": "Cloud-Reported Alerts — Multi-Channel", "priority": 1, "demo": false, "req": "Supports 24×7 monitoring, with alerts for sub-health states (storage pool, drive [system/metadata] capacity, etc.) and business anomalies; supports configuring alert delivery via email, SMS, WeCom, phone call, DingTalk, Feishu, and other channels, plus alert and resource-status monitoring via a mobile mini-program.", "sf": "meet", "xsky": "not", "hw": "not", "inspur": "not", "h3c": "not", "note": "Can raise competitors' cost of compliance, provided the cloud-based ITOM management platform is deployed.", "docref": null, "id": 59}, {"cat": "Operations & Management", "item": "Cloud-Reported Alerts — Proactive Handling", "priority": 0, "demo": false, "req": "To reduce the risk that storage-system issues pose to business systems and enable early detection of environment issues, supports reporting console alerts and risk events to the cloud, where they can be routed to operations staff or a ticketing system for proactive handling — eliminating risk from unresolved alerts and safeguarding business stability.", "sf": "meet", "xsky": "not", "hw": "not", "inspur": "not", "h3c": "not", "note": null, "docref": null, "id": 60}, {"cat": "Service", "item": "Installation & Training", "priority": 0, "demo": false, "req": "Provides on-site installation and training services delivered by original-manufacturer engineers.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": null, "id": 61}, {"cat": "Service", "item": "Warranty & Support", "priority": 0, "demo": false, "req": "Provides original-manufacturer project management, on-site installation, configuration, and implementation services. The original manufacturer must provide at least a 3-year warranty and 3 years of 7×24 on-site repair service, including hardware phone/on-site support and software upgrades, with a local service organization in-country. At bid submission, provide a manufacturer authorization letter and a warranty-service commitment letter specific to the project.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": null, "id": 62}, {"cat": "Certifications & Qualifications", "item": "CMMI Level 5 Certificate", "priority": 1, "demo": false, "req": "To ensure software development maturity, the distributed-storage manufacturer must hold a CMMI Level 5 certificate; provide a certified copy stamped with the manufacturer's official seal.", "sf": "meet", "xsky": "not", "hw": "not", "inspur": "meet", "h3c": "meet", "note": "(1) XSKY and Huawei are certified only at Maturity Level 3. (2) Regional practice: for non-government tenders, working with the tendering agent to require 'original documents' can raise the entry barrier for some vendors (used in past regional projects).", "docref": "See company qualification database: kb.atrust.sangfor.com (tid=692)", "id": 63}, {"cat": "Certifications & Qualifications", "item": "Class-A Cybersecurity Emergency Response Unit", "priority": 1, "demo": false, "req": "The bid distributed-storage manufacturer must demonstrate strong technical capability and data-center security service capability, and provide a Class-A Emergency Response Support Unit certificate issued by CNCERT (National Internet Emergency Center).", "sf": "meet", "xsky": "not", "hw": "not", "inspur": "not", "h3c": "not", "note": "H3C and Huawei are Class-B units (cert.org.cn).", "docref": null, "id": 64}, {"cat": "Certifications & Qualifications", "item": "ISO 9001:2015 Certification", "priority": 0, "demo": false, "req": "To ensure high-quality, responsive after-sales service, the bid distributed-storage manufacturer must hold ISO 9001:2015 certification; provide a certified copy stamped with the manufacturer's official seal.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": null, "docref": null, "id": 65}, {"cat": "Certifications & Qualifications", "item": "MPS Network Security Product Certificate", "priority": 3, "demo": false, "req": "To ensure product security, the storage software must hold the Network Security Dedicated Product Security Certification issued by China's Ministry of Public Security.", "sf": "meet", "xsky": "not", "hw": "meet", "inspur": "not", "h3c": "meet", "note": "Only H3C, Huawei, and Sangfor hold this qualification; no other storage vendor does (verify at ispl.cn).", "docref": "See EDS Qualifications thread", "id": 66}, {"cat": "Certifications & Qualifications", "item": "Cloud-Native / CNCF Membership", "priority": 0, "demo": false, "req": "The bid storage manufacturer must be a member of the Cloud Native Computing Foundation; provide a screenshot of the official CNCF Cloud Native Landscape page.", "sf": "meet", "xsky": "meet", "hw": "meet", "inspur": "meet", "h3c": "meet", "note": "Most mainstream storage vendors meet this requirement. Useful when responding to a bid, but not recommended as a tender-defining requirement since it has limited differentiating value.", "docref": null, "id": 67}, {"cat": "HCI / Cloud Platform Integration", "item": "Cloud Management Platform Integration — Private Protocol", "priority": 2, "demo": true, "req": "Supports being managed by an existing cloud-management platform via a private protocol, so that cloud tenants/users can manage and allocate storage resources through the cloud-management platform.", "sf": "meet", "xsky": "not", "hw": "not", "inspur": "not", "h3c": "not", "note": "(1) EDS object/file storage can be managed by Sangfor SCP; useful for excluding competitors when bundled with Sangfor HCI/SCP. (2) On the SCP cloud-management platform, file storage supports directory, service, and share management; object storage supports account, storage-pool, and bucket management — see the SCP user manual for details.", "docref": null, "id": 68}, {"cat": "HCI / Cloud Platform Integration", "item": "HCI / Desktop-Cloud Native Integration", "priority": 2, "demo": true, "req": "To reduce day-to-day operations overhead and improve unified monitoring/management across multiple clusters, the procured distributed storage must integrate smoothly with the HCI/desktop-cloud platform, natively supporting file-resource account management, directory creation, and user-permission control from within the HCI/desktop-cloud management console.", "sf": "meet", "xsky": "not", "hw": "meet", "inspur": "unk", "h3c": "meet", "note": "(1) For existing Sangfor HCI/aDesk customers, this can build a capability moat that excludes other storage vendors. (2) In new HCI/aDesk + EDS deployments, bundling the two lets vendors with both HCI/aDesk and storage (e.g., Huawei, H3C) qualify while excluding storage-only vendors (e.g., XSKY, Macrosan); it also discourages splitting the bid across separate channels/products.", "docref": null, "id": 69}, {"cat": "HCI / Cloud Platform Integration", "item": "Virtualization / Desktop-Cloud Platform Compatibility", "priority": 3, "demo": false, "req": "The bid storage product must demonstrate broad cloud-platform compatibility, compatible with at least one top-3 domestic virtualization-platform vendor and one top-3 domestic desktop-cloud vendor, with compatibility-certification materials from both provided.", "sf": "meet", "xsky": "not", "hw": "meet", "inspur": "not", "h3c": "meet", "note": "(1) XSKY and Inspur lack top-3 domestic desktop-cloud compatibility certification (may hold a Citrix desktop-cloud certification instead). (2) HCI and desktop-cloud compatibility certification is a company-level qualification — see the knowledge-base 'Competitive Materials: Certifications.'", "docref": "See EDS Qualifications thread (internal compatibility certification)", "id": 70}, {"cat": "HCI / Cloud Platform Integration", "item": "Desktop-Cloud Storage-Compute Separation", "priority": 1, "demo": false, "req": "To ensure platform stability and compatibility, the bid storage product must provide an interoperability compatibility certificate with the desktop-cloud product (not required if storage and desktop cloud share the same brand). The storage vendor must be a well-known domestic manufacturer — not an OEM product, not jointly developed, no open-source products accepted — fully self-developed, with proof of independent IP for the distributed storage system, and able to supply both distributed storage and desktop-cloud software.", "sf": "meet", "xsky": "not", "hw": "meet", "inspur": "unk", "h3c": "meet", "note": "Can exclude storage-only vendors such as XSKY and Macrosan.", "docref": "See Qualifications thread (software copyright)", "id": 71}, {"cat": "HCI / Cloud Platform Integration", "item": "VSS Shadow Copy", "priority": 1, "demo": false, "req": "File storage must support Volume Shadow Copy Service (VSS), allowing users to independently recover historical file versions from a Windows desktop client, reducing administrator workload.", "sf": "meet", "xsky": "not", "hw": "unk", "inspur": "unk", "h3c": "unk", "note": null, "docref": "EDS Tender Parameter Screenshots, Sec. 9.2", "id": 72}, {"cat": "Industry-Specific", "item": "Industrial Data Collection Tool", "priority": 2, "demo": true, "req": "To reduce data-management and long-term retention costs, the bid product must provide a free data-collection tool that can collect data from industrial-control (IPC) machines into the storage platform, supporting both agent-based (client agent on the machine) and agentless (shared-folder configuration with automated collection via the data-management platform) modes, plus upload/download tools for moving data between the storage platform and a PC.", "sf": "meet", "xsky": "meet", "hw": "not", "inspur": "not", "h3c": "meet", "note": "This tool (Shenzhou platform) has practical value primarily in manufacturing / industrial-vision (AOI) scenarios. In manufacturing production-line collection scenarios, competitors need a third-party tool, raising their commercial cost.", "docref": "EDS Tender Parameter Screenshots, Sec. 10.1", "id": 73}]
+;
+
+let selectedIds = new Set();
+let activeCategory = "all";
+
+const catCounts = {};
+DATA.forEach(r => { catCounts[r.cat] = (catCounts[r.cat] || 0) + 1; });
+
+function buildCategoryChips() {
+    const wrap = document.getElementById('categoryChips');
+    const cats = Object.keys(catCounts).sort();
+    let html = `<div class="chip active" data-cat="all" onclick="setCategory('all')">All <span class="cnt">${DATA.length}</span></div>`;
+    cats.forEach(c => {
+        html += `<div class="chip" data-cat="${escapeAttr(c)}" onclick="setCategory('${escapeAttr(c)}')">${escapeHtml(c)} <span class="cnt">${catCounts[c]}</span></div>`;
+    });
+    wrap.innerHTML = html;
+}
+
+function setCategory(cat) {
+    activeCategory = cat;
+    document.querySelectorAll('.chip').forEach(el => {
+        el.classList.toggle('active', el.getAttribute('data-cat') === cat);
+    });
+    renderTable();
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+function starHtml(p) {
+    if (p === 0) return '<span class="stars zero">&#8212;</span>';
+    return `<span class="stars">${'&#9733;'.repeat(p)}</span>`;
+}
+
+function statusDot(v) {
+    if (v === 'meet') return '<span class="status-dot status-meet" title="Meets requirement">&#10003;</span>';
+    if (v === 'not') return '<span class="status-dot status-not" title="Does not meet">&times;</span>';
+    return '<span class="status-dot status-unk" title="Unconfirmed / unknown">?</span>';
+}
+
+function matchesFilters(r) {
+    const q = document.getElementById('searchBox').value.trim().toLowerCase();
+    if (q) {
+        const hay = (r.item + ' ' + r.req + ' ' + (r.note || '') + ' ' + r.cat).toLowerCase();
+        if (!hay.includes(q)) return false;
+    }
+    if (activeCategory !== 'all' && r.cat !== activeCategory) return false;
+
+    const demoF = document.getElementById('demoFilter').value;
+    if (demoF === 'yes' && !r.demo) return false;
+    if (demoF === 'no' && r.demo) return false;
+
+    const prioF = document.getElementById('priorityFilter').value;
+    if (prioF !== 'all' && String(r.priority) !== prioF) return false;
+
+    const gapF = document.getElementById('gapFilter').value;
+    const competitors = [r.xsky, r.hw, r.inspur, r.h3c];
+    if (gapF === 'anygap' && !competitors.some(c => c !== 'meet')) return false;
+    if (gapF === 'allgap' && !competitors.every(c => c === 'not')) return false;
+
+    return true;
+}
+
+function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    const rows = DATA.filter(matchesFilters);
+    let html = '';
+    rows.forEach(r => {
+        const checked = selectedIds.has(r.id) ? 'checked' : '';
+        const rowClass = selectedIds.has(r.id) ? 'selected-row' : '';
+        const noteBlock = r.note ? `
+            <div class="note-toggle" onclick="toggleNote(event, ${r.id})">&#9432; Competitive note</div>
+            <div class="note-box" id="note-${r.id}">${escapeHtml(r.note)}${r.docref ? `<div class="docref">Ref: ${escapeHtml(r.docref)}</div>` : ''}</div>` :
+            (r.docref ? `<div class="docref">Ref: ${escapeHtml(r.docref)}</div>` : '');
+        html += `
+        <tr class="${rowClass}" data-id="${r.id}" onclick="toggleRow(event, ${r.id})">
+            <td class="center"><input type="checkbox" ${checked} onclick="toggleRow(event, ${r.id})"></td>
+            <td>${escapeHtml(r.cat)}</td>
+            <td><strong>${escapeHtml(r.item)}</strong></td>
+            <td class="req-text">
+                <div class="req-clamped" id="req-${r.id}">${escapeHtml(r.req)}</div>
+                <span class="req-toggle" onclick="toggleReq(event, ${r.id})">Show more</span>
+                ${noteBlock}
+            </td>
+            <td class="center">${starHtml(r.priority)}</td>
+            <td class="center">${r.demo ? '<span class="demo-yes">Yes</span>' : '<span class="demo-no">No</span>'}</td>
+            <td class="center">${statusDot(r.sf)}</td>
+            <td class="center">${statusDot(r.xsky)}</td>
+            <td class="center">${statusDot(r.hw)}</td>
+            <td class="center">${statusDot(r.inspur)}</td>
+            <td class="center">${statusDot(r.h3c)}</td>
+        </tr>`;
+    });
+    tbody.innerHTML = html || '<tr><td colspan="11" style="text-align:center; padding:24px; color:#999;">No requirements match the current filters.</td></tr>';
+    document.getElementById('resultsCount').innerText = `Showing ${rows.length} of ${DATA.length} requirements.`;
+}
+
+function toggleReq(ev, id) {
+    ev.stopPropagation();
+    const el = document.getElementById('req-' + id);
+    const btn = ev.target;
+    el.classList.toggle('req-clamped');
+    btn.innerText = el.classList.contains('req-clamped') ? 'Show more' : 'Show less';
+}
+
+function toggleNote(ev, id) {
+    ev.stopPropagation();
+    document.getElementById('note-' + id).classList.toggle('open');
+}
+
+function toggleRow(ev, id) {
+    ev.stopPropagation();
+    if (selectedIds.has(id)) selectedIds.delete(id);
+    else selectedIds.add(id);
+    renderTable();
+    renderCart();
+}
+
+function selectAllVisible() {
+    DATA.filter(matchesFilters).forEach(r => selectedIds.add(r.id));
+    renderTable();
+    renderCart();
+}
+
+function clearVisible() {
+    DATA.filter(matchesFilters).forEach(r => selectedIds.delete(r.id));
+    renderTable();
+    renderCart();
+}
+
+function clearCart() {
+    selectedIds.clear();
+    renderTable();
+    renderCart();
+}
+
+function removeFromCart(id) {
+    selectedIds.delete(id);
+    renderTable();
+    renderCart();
+}
+
+function renderCart() {
+    const items = DATA.filter(r => selectedIds.has(r.id));
+    document.getElementById('cartCount').innerText = items.length;
+    document.getElementById('cartStrategic').innerText = items.filter(r => r.priority === 3).length;
+    const list = document.getElementById('cartList');
+    if (items.length === 0) {
+        list.innerHTML = '<div class="empty-cart">No requirements selected yet. Browse the library and click a row to add it here.</div>';
+        return;
+    }
+    list.innerHTML = items.map(r => `
+        <div class="cart-item">
+            <span>${escapeHtml(r.item)}</span>
+            <span class="remove" onclick="removeFromCart(${r.id})" title="Remove">&times;</span>
+        </div>`).join('');
+}
+
+function buildExportText(withNotes) {
+    const items = DATA.filter(r => selectedIds.has(r.id));
+    if (items.length === 0) return '';
+    let out = 'SANGFOR aStor-EDS ALL-FLASH \u2014 TENDER TECHNICAL SPECIFICATIONS\n';
+    out += `Generated: ${new Date().toISOString().slice(0,10)} | ${items.length} requirement(s) selected\n`;
+    if (withNotes) out += 'INTERNAL DRAFT \u2014 CONTAINS COMPETITIVE POSITIONING NOTES \u2014 DO NOT SHARE EXTERNALLY\n';
+    out += '='.repeat(70) + '\n\n';
+
+    const byCat = {};
+    items.forEach(r => { (byCat[r.cat] = byCat[r.cat] || []).push(r); });
+
+    let n = 1;
+    Object.keys(byCat).forEach(cat => {
+        out += `${cat.toUpperCase()}\n${'-'.repeat(cat.length)}\n\n`;
+        byCat[cat].forEach(r => {
+            out += `${n}. ${r.item}${r.priority > 0 ? '  ' + '*'.repeat(r.priority) : ''}\n`;
+            out += `   ${r.req}\n`;
+            if (r.demo) out += `   [On-site demonstration available]\n`;
+            if (withNotes && r.note) {
+                out += `   INTERNAL NOTE: ${r.note}\n`;
+                out += `   Competitor status \u2014 XSKY: ${r.xsky}, Huawei: ${r.hw}, Inspur: ${r.inspur}, H3C: ${r.h3c}\n`;
+            }
+            if (r.docref) out += `   Reference: ${r.docref}\n`;
+            out += '\n';
+            n++;
+        });
+    });
+    return out;
+}
+
+function showToast(msg) {
+    const t = document.getElementById('copyToast');
+    t.innerText = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function copySelected(withNotes) {
+    const text = buildExportText(withNotes);
+    if (!text) { showToast('No requirements selected'); return; }
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(withNotes ? 'Copied with internal notes' : 'Copied clean spec text');
+    }).catch(() => {
+        showToast('Copy failed \u2014 select and copy manually');
+    });
+}
+
+function downloadSelected() {
+    const text = buildExportText(true);
+    if (!text) { showToast('No requirements selected'); return; }
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `aStor_AllFlash_Tender_Specs_${new Date().toISOString().slice(0,10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Download started');
+}
+
+buildCategoryChips();
+renderTable();
+renderCart();
+</script>
+
+</body>
+</html>
