@@ -1,145 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sangfor aStor-EDS All-Flash Sizing Tool</title>
-    <style>
-        :root {
-            --primary: #0066cc;
-            --secondary: #f0f2f5;
-            --accent: #28a745;
-            --warning: #ffc107;
-            --danger: #dc3545;
-            --text-dark: #333;
-            --text-light: #666;
-            --border: #ddd;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sangfor aStor-EDS All-Flash Sizing Tool</title>
+<style>
+    :root {
+        --primary: #0066cc;
+        --secondary: #f0f2f5;
+        --accent: #28a745;
+        --warning: #ffc107;
+        --danger: #dc3545;
+        --text-dark: #333;
+        --text-light: #666;
+        --border: #ddd;
+    }
 
-        body {
-            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--secondary);
-            color: var(--text-dark);
-            line-height: 1.6;
-        }
+    * { box-sizing: border-box; }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+    body {
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: var(--secondary);
+        color: var(--text-dark);
+        line-height: 1.6;
+    }
 
-        /* Header */
-        header {
-            background-color: #fff;
-            padding: 20px;
-            border-bottom: 3px solid var(--primary);
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .container { max-width: 1240px; margin: 0 auto; padding: 20px; }
 
-        h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
-        h2 { font-size: 1.2rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        .subtitle { font-size: 0.9rem; color: var(--text-light); }
+    header {
+        background-color: #fff;
+        padding: 20px;
+        border-bottom: 3px solid var(--primary);
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
 
-        /* Cards */
-        .card {
-            background: #fff;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
+    h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+    h2 { font-size: 1.2rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 10px; display:flex; align-items:center; gap:10px;}
+    h3 { font-size: 1rem; margin: 15px 0 8px; }
+    .subtitle { font-size: 0.9rem; color: var(--text-light); }
 
-        /* Grid Layouts */
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .step-badge {
+        display:inline-flex; align-items:center; justify-content:center;
+        width:26px; height:26px; border-radius:50%;
+        background: var(--primary); color:#fff; font-size:0.85rem; font-weight:bold;
+        flex-shrink:0;
+    }
 
-        @media (max-width: 768px) {
-            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-        }
+    .card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
 
-        /* Form Elements */
-        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
-        .note { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
-        
-        select, input[type="number"], input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 1rem;
-        }
-        
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .checkbox-group input { width: auto; }
+    @media (max-width: 768px) {
+        .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    }
 
-        /* Tables */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; font-size: 0.9rem; }
-        th { background-color: #f8f9fa; color: var(--text-dark); }
-        tr:hover { background-color: #f1f1f1; cursor: pointer; }
-        
-        .selected-row { background-color: #e6f2ff !important; border-left: 4px solid var(--primary); }
+    label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
+    .note { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
 
-        /* Indicators */
-        .tag {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            color: white;
-        }
-        .tag-rec { background-color: var(--accent); }
-        .tag-warn { background-color: var(--warning); color: #333; }
-        .tag-err { background-color: var(--danger); }
+    select, input[type="number"], input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        box-sizing: border-box;
+        font-size: 1rem;
+        background:#fff;
+    }
+    select:disabled, input:disabled { background:#f5f5f5; color:#888; }
 
-        /* Output Box */
-        .output-box {
-            background-color: #2c3e50;
-            color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-        }
-        .output-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #34495e;
-            padding-bottom: 5px;
-        }
-        .output-row:last-child { border-bottom: none; }
-        .output-val { font-weight: bold; color: #4dabf7; }
+    input:focus, select:focus { outline: none; border-color: var(--primary); }
 
-        /* Footer */
-        footer { text-align: center; font-size: 0.8rem; color: var(--text-light); margin-top: 40px; }
-        
-        .alert {
-            padding: 10px;
-            background-color: #e2e3e5;
-            border-left: 4px solid #383d41;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-        }
-    </style>
+    .checkbox-group { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .checkbox-group input { width: auto; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size:0.9rem;}
+    th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+    th { background-color: #f8f9fa; color: var(--text-dark); }
+    tr.selectable:hover { background-color: #f1f1f1; cursor: pointer; }
+    .selected-row { background-color: #e6f2ff !important; border-left: 4px solid var(--primary); }
+    .row-disabled { color:#bbb; }
+    .row-disabled td { color:#bbb; }
+
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; color: white; white-space:nowrap;}
+    .tag-rec { background-color: var(--accent); }
+    .tag-warn { background-color: var(--warning); color: #333; }
+    .tag-err { background-color: var(--danger); }
+    .tag-info { background-color: #6c757d; }
+
+    .output-box { background-color: #2c3e50; color: #fff; padding: 20px; border-radius: 8px; }
+    .output-row { display: flex; justify-content: space-between; gap:10px; margin-bottom: 10px; border-bottom: 1px solid #34495e; padding-bottom: 5px; }
+    .output-row:last-child { border-bottom: none; margin-bottom:0;}
+    .output-row span:first-child { color:#cfd8dc; }
+    .output-val { font-weight: bold; color: #4dabf7; text-align:right; }
+
+    footer { text-align: center; font-size: 0.8rem; color: var(--text-light); margin-top: 40px; }
+
+    .alert { padding: 10px 14px; background-color: #e2e3e5; border-left: 4px solid #383d41; margin-bottom: 15px; font-size: 0.85rem; border-radius:2px;}
+    .alert-blue { background:#e7f1ff; border-left-color: var(--primary); }
+    .alert-green { background:#e9f9ee; border-left-color: var(--accent); }
+    .alert-red { background:#fdecea; border-left-color: var(--danger); }
+
+    .rec-grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+    @media (max-width: 768px) { .rec-grid { grid-template-columns: 1fr; } }
+
+    .rec-card {
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        position: relative;
+        background:#fafbfc;
+    }
+    .rec-card.active { border-color: var(--accent); background: #f4fcf6; }
+    .rec-card.unavailable { opacity:0.55; }
+    .rec-card h4 { margin:0 0 10px; font-size:0.95rem; display:flex; justify-content:space-between; align-items:center;}
+    .rec-line { display:flex; justify-content:space-between; font-size:0.88rem; padding:4px 0; border-bottom:1px dashed #e3e3e3;}
+    .rec-line:last-of-type { border-bottom:none; }
+    .rec-line b { color: var(--primary); }
+    .btn {
+        display:inline-block; margin-top:12px; padding:8px 16px; border:none; border-radius:5px;
+        background: var(--primary); color:#fff; font-size:0.85rem; font-weight:600; cursor:pointer;
+        width:100%; text-align:center;
+    }
+    .btn:hover { background:#0052a3; }
+    .btn.secondary { background:#6c757d; }
+    .btn.secondary:hover { background:#565e64; }
+    .btn:disabled { background:#ccc; cursor:not-allowed; }
+
+    .selected-config-box {
+        margin-top:16px; padding:14px 16px; border-radius:6px; background:#eaf5ee;
+        border:1px solid #b9e0c4; font-size:0.9rem;
+    }
+    .selected-config-box.empty { background:#fdecea; border-color:#f3c2be; }
+    .divider { border:none; border-top:1px solid var(--border); margin:20px 0; }
+
+    .hidden { display:none !important; }
+
+    .pill-input-row { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+    .pill-input-row > div { flex: 1 1 160px; }
+</style>
 </head>
 <body>
 
@@ -147,519 +161,748 @@
     <header>
         <div>
             <h1>Sangfor aStor-EDS All-Flash Sizing Tool</h1>
-            <div class="subtitle">Configuration & Capacity Calculator (v2.0 Web Edition)</div>
+            <div class="subtitle">Configuration &amp; Capacity Calculator — Web Edition v3.0</div>
         </div>
-        <div>
-            <span style="font-size: 0.8rem; color: #666;">Based on EDS V5.3.0 Guide</span>
+        <div style="text-align:right;">
+            <span style="font-size: 0.8rem; color: #666;">Logic aligned with EDS V5.3 Selection Guide<br>(内部选型指导工具 V4.2)</span>
         </div>
     </header>
 
+    <!-- STEP 1 -->
     <div class="card">
-        <h2>1. Hardware Series Selection</h2>
-        <div class="grid-2">
+        <h2><span class="step-badge">1</span> Cluster &amp; Model Selection</h2>
+        <div class="grid-3">
             <div>
                 <label for="modelSeries">Product Series</label>
-                <select id="modelSeries" onchange="updateUIForSeries()">
-                    <option value="T">F3000T / F6000T (Performance - TLC)</option>
-                    <option value="Q">F3000Q / F6000Q (Capacity - QLC)</option>
+                <select id="modelSeries" onchange="onSeriesChange()">
+                    <option value="T">F3000T / F6000T — Block + File (TLC)</option>
+                    <option value="Q">F3000Q / F6000Q — File Only (QLC + TLC Cache)</option>
                 </select>
-                <div class="note" id="modelDesc">Suitable for Block & File storage. High performance.</div>
+                <div class="note" id="modelDesc">Performance/Balanced tier, all-TLC. Supports Block &amp; File storage.</div>
             </div>
             <div>
-                <label for="modelType">Controller Performance Level</label>
-                <select id="modelType" onchange="recalc()">
+                <label for="modelType">Controller Performance Tier</label>
+                <select id="modelType" onchange="recalcAll()">
                     <option value="3000">3000 Series (Standard)</option>
                     <option value="6000">6000 Series (High Performance)</option>
                 </select>
+                <div class="note">F3000: base 128GB/chassis (64GB/controller). F6000: base 256GB/chassis (128GB/controller).</div>
             </div>
+            <div>
+                <label for="chassisCount">Number of Chassis in Cluster</label>
+                <input type="number" id="chassisCount" value="1" min="1" max="8" step="1" oninput="recalcAll()">
+                <div class="note">Max 8 chassis (16 controllers) per cluster. All chassis must use the same EC strategy.</div>
+            </div>
+        </div>
+        <div class="alert alert-blue" style="margin-top:10px;">
+            Each aStor-EDS chassis is a dual-controller (2-node) unit with 24× U.2 NVMe slots. No node/model mixing within a chassis.
+            For a multi-chassis cluster, size the capacity requirement <strong>per chassis</strong> below — Sangfor's official tool works the same way.
         </div>
     </div>
 
+    <!-- STEP 2 -->
     <div class="card">
-        <h2>2. Capacity Sizing</h2>
+        <h2><span class="step-badge">2</span> Data Disk Capacity Sizing <span class="note" style="font-weight:normal;">(per chassis)</span></h2>
         <div class="grid-3">
             <div>
-                <label for="diskSize">Disk Specification (NVMe SSD)</label>
-                <select id="diskSize" onchange="recalc()">
-                    </select>
-                <div class="note" id="cacheNote" style="display:none; color: var(--primary);">*Includes linked Cache Disks automatically</div>
+                <label for="targetUsable">Required Usable Capacity per Chassis (TiB)</label>
+                <input type="number" id="targetUsable" value="100" min="1" oninput="recalcAll()">
             </div>
             <div>
-                <label for="calcMode">Calculation Mode</label>
-                <select id="calcMode" onchange="toggleCapacityInput()">
-                    <option value="usableToRaw">Target: Usable Capacity -> Calculate Raw</option>
-                    <option value="rawToUsable">Target: Raw Capacity -> Calculate Usable</option>
-                </select>
-            </div>
-            <div>
-                <label for="inputCapacity">Input Capacity (TB)</label>
-                <input type="number" id="inputCapacity" value="100" min="1" oninput="recalc()">
+                <div class="note" style="margin-top:24px;">
+                    The tool scans every valid disk-spec / disk-count / EC combination for this chassis
+                    and returns the lowest-cost <strong>Preferred</strong> option (larger disks &amp; higher EC ratio preferred)
+                    plus a <strong>Alternate</strong> option using a different disk spec.
+                </div>
             </div>
         </div>
 
-        <div class="alert" style="margin-top: 15px;">
-            <strong>Formula Note:</strong> 1TB Disk = 0.91TB (Binary). System Overhead = 10%. <br>
-            <em>Usable = Raw × (931/1024) × (Data / (Data+Parity)) × 0.9</em>
+        <div class="rec-grid" style="margin-top:10px;">
+            <div class="rec-card" id="prefCard">
+                <h4>⭐ Preferred Configuration <span class="tag tag-rec">Best Value</span></h4>
+                <div id="prefBody"></div>
+                <button class="btn" id="prefBtn" onclick="applyRecommendation('preferred')">Use Preferred Configuration</button>
+            </div>
+            <div class="rec-card" id="altCard">
+                <h4>Alternate Configuration <span class="tag tag-info">Different Disk Spec</span></h4>
+                <div id="altBody"></div>
+                <button class="btn secondary" id="altBtn" onclick="applyRecommendation('alternate')">Use Alternate Configuration</button>
+            </div>
         </div>
 
-        <div id="capacityTableContainer">
-            <h3>Redundancy Strategy Options (Select One)</h3>
-            <table id="capacityTable">
-                <thead>
-                    <tr>
-                        <th>Select</th>
-                        <th>EC Mode</th>
-                        <th>Raw Cap (TB)</th>
-                        <th>Usable Cap (TB)</th>
-                        <th>Est. Data Disks</th>
-                        <th>Min Disks/Chassis</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="capacityBody">
-                    </tbody>
-            </table>
+        <hr class="divider">
+
+        <h3>Or choose disk spec / count manually</h3>
+        <div class="pill-input-row">
+            <div>
+                <label for="manualSpec">Data Disk Spec (TB)</label>
+                <select id="manualSpec" onchange="renderManualTable()"></select>
+            </div>
+            <div>
+                <label for="manualCount">Data Disk Count (per chassis)</label>
+                <input type="number" id="manualCount" value="20" min="8" max="24" oninput="renderManualTable()">
+            </div>
+        </div>
+        <table id="manualTable">
+            <thead>
+                <tr><th>Select</th><th>EC Strategy</th><th>Min Disks Required</th><th>Raw Capacity (TB)</th><th>Usable Capacity (TiB)</th><th>Meets Target?</th></tr>
+            </thead>
+            <tbody id="manualBody"></tbody>
+        </table>
+
+        <div class="selected-config-box empty" id="selectedConfigBox">
+            No configuration selected yet — pick Preferred / Alternate above, or a manual EC row.
+        </div>
+
+        <div class="alert alert-blue" style="margin-top:15px;">
+            <strong>Capacity formula</strong> (matches the official Excel tool exactly):<br>
+            Usable (TiB) = ( Raw(TB) × 931⁄1024 × 0.9 − 0.352 ) × N ⁄ (N+2), where EC = N+2 and 0.352 TiB is reserved for the arbitration/quorum partition.<br>
+            <em>1 TB (decimal, disk-rated) ≈ 0.91 TiB (binary, OS-visible).</em> Minimum disks per EC ratio = N+4 (2 parity + 2 hot-spare reserve).
         </div>
     </div>
 
+    <!-- STEP 3: Q-series cache disk sizing -->
+    <div class="card" id="cacheCard">
+        <h2><span class="step-badge">3</span> Cache Disk Sizing &amp; File-Count Capacity Check <span class="note" style="font-weight:normal;">(QLC models only)</span></h2>
+        <div class="alert alert-blue">
+            F3000Q/F6000Q require a minimum of 4 TLC cache disks per chassis (5+ recommended for higher availability — with only 4, a second
+            cache-disk failure halts all file services). 15.36TB data disks must pair with 3.84TB cache disks; 30.72TB data disks must pair with 7.68TB cache disks.
+            Cache + data disk count must not exceed 24 slots per chassis.
+        </div>
+        <div class="grid-4">
+            <div>
+                <label for="cacheCount">Cache Disks per Chassis</label>
+                <input type="number" id="cacheCount" value="4" min="4" oninput="computeCache()">
+            </div>
+            <div>
+                <label for="cacheSpecDisplay">Cache Disk Spec (TB, auto-paired)</label>
+                <input type="text" id="cacheSpecDisplay" value="3.84" disabled>
+            </div>
+            <div>
+                <label for="avgFileSize">Average File Size (KB)</label>
+                <input type="number" id="avgFileSize" value="200" min="1" oninput="computeCache()">
+            </div>
+            <div>
+                <label for="cacheDataCount">Data Disks per Chassis (from Step 2)</label>
+                <input type="number" id="cacheDataCount" value="20" min="8" max="20" oninput="computeCache()">
+            </div>
+        </div>
+        <table style="margin-top:15px;">
+            <tbody id="cacheResultBody"></tbody>
+        </table>
+        <div id="cacheVerdicts" style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;"></div>
+    </div>
+
+    <!-- STEP 4: Memory -->
     <div class="card">
-        <h2>3. Advanced Hardware & Network Sizing</h2>
+        <h2><span class="step-badge">4</span> Memory Sizing</h2>
+        <div class="grid-3">
+            <div>
+                <label for="smbClients">Concurrent SMB Client Connections (cluster-wide)</label>
+                <input type="number" id="smbClients" value="0" min="0" oninput="computeMemory()">
+                <div class="note" id="perControllerNote">Per-controller = total ÷ chassis ÷ 2 controllers</div>
+            </div>
+            <div>
+                <div class="checkbox-group" style="margin-top:24px;">
+                    <input type="checkbox" id="featureFlags" onchange="computeMemory()">
+                    <label for="featureFlags" style="margin-bottom:0;">Data-copy features enabled (archive / load / replicate)</label>
+                </div>
+                <div class="note">Requires ≥128GB per controller regardless of client count.</div>
+            </div>
+            <div>
+                <div class="note" style="margin-top:24px;" id="diskMemNote">Data disk spec is auto-checked against the ≥15.36TB → ≥128GB/controller rule.</div>
+            </div>
+        </div>
+        <table style="margin-top:15px;"><tbody id="memoryResultBody"></tbody></table>
+    </div>
+
+    <!-- STEP 5: Network -->
+    <div class="card">
+        <h2><span class="step-badge">5</span> Network Accessories</h2>
         <div class="grid-2">
             <div>
-                <label for="smbClients">Estimated Concurrent SMB Clients</label>
-                <input type="number" id="smbClients" value="0" placeholder="e.g. 500" oninput="recalcHardware()">
-                <div class="note">Affects RAM sizing</div>
+                <label for="uplinkType">Front-End (Business Network) Uplink Type</label>
+                <select id="uplinkType" onchange="computeNetwork()">
+                    <option value="100G">100GbE NIC (DAC cabling)</option>
+                    <option value="HBA">HBA (FC, LC-LC fiber) — T-series only</option>
+                    <option value="10G">10GbE NIC (LC-LC fiber + optics)</option>
+                </select>
+                <div class="note">Q-series does not support HBA uplinks.</div>
             </div>
             <div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="featureFlags" onchange="recalcHardware()">
-                    <label for="featureFlags">Enable Advanced Features (Archive, S3 Load, Replication)</label>
-                </div>
-                <div class="note">Requires additional RAM</div>
+                <label for="uplinkCount">Business NICs/HBAs (total in cluster)</label>
+                <input type="number" id="uplinkCount" value="0" min="0" oninput="computeNetwork()">
+                <div class="note" id="uplinkMinNote">Leave at 0 to auto-fill the minimum recommended count.</div>
             </div>
         </div>
+        <table style="margin-top:15px;"><tbody id="networkResultBody"></tbody></table>
     </div>
 
+    <!-- STEP 6: Summary -->
     <div class="card">
-        <h2>4. Configuration Summary (Bill of Materials)</h2>
+        <h2><span class="step-badge">6</span> Configuration Summary (Bill of Materials)</h2>
         <div class="grid-2">
             <div>
                 <div class="output-box">
-                    <h3 style="color:white; margin-top:0; border-bottom:1px solid #aaa; padding-bottom:10px;">Server Hardware</h3>
-                    
-                    <div class="output-row">
-                        <span>Server Model</span>
-                        <span class="output-val" id="outModel">F3000T</span>
-                    </div>
-                    <div class="output-row">
-                        <span>Total Chassis (Nodes)</span>
-                        <span class="output-val" id="outChassis">1 Chassis (2 Nodes)</span>
-                    </div>
-                    <div class="output-row">
-                        <span>Total Data Disks</span>
-                        <span class="output-val" id="outDataDisks">0</span>
-                    </div>
-                     <div class="output-row" id="rowCacheDisks" style="display:none;">
-                        <span>Total Cache Disks (TLC)</span>
-                        <span class="output-val" id="outCacheDisks">0</span>
-                    </div>
-                    <div class="output-row">
-                        <span>Memory Config (Per Node)</span>
-                        <span class="output-val" id="outMem">64GB</span>
-                    </div>
-                    <div class="output-row">
-                        <span>Add-on RAM Modules</span>
-                        <span class="output-val" id="outMemAddon">None</span>
-                    </div>
+                    <h3 style="color:white; margin-top:0; border-bottom:1px solid #aaa; padding-bottom:10px;">Server &amp; Storage Hardware</h3>
+                    <div class="output-row"><span>Server Model</span><span class="output-val" id="outModel">—</span></div>
+                    <div class="output-row"><span>Software License Type</span><span class="output-val" id="outLicense">—</span></div>
+                    <div class="output-row"><span>Chassis (Controllers)</span><span class="output-val" id="outChassis">—</span></div>
+                    <div class="output-row"><span>Data Disks / chassis</span><span class="output-val" id="outDataDisksPer">—</span></div>
+                    <div class="output-row"><span>Data Disks — cluster total</span><span class="output-val" id="outDataDisksTotal">—</span></div>
+                    <div class="output-row hidden" id="rowCacheDisks"><span>Cache Disks (TLC) — cluster total</span><span class="output-val" id="outCacheDisks">—</span></div>
+                    <div class="output-row"><span>Raw Capacity (cluster)</span><span class="output-val" id="outRawTotal">—</span></div>
+                    <div class="output-row"><span>Usable Capacity (cluster)</span><span class="output-val" id="outUsableTotal">—</span></div>
+                    <div class="output-row"><span>Required License Capacity</span><span class="output-val" id="outLicenseCap">—</span></div>
+                    <div class="output-row"><span>Memory / chassis</span><span class="output-val" id="outMem">—</span></div>
+                    <div class="output-row"><span>Memory — cluster total</span><span class="output-val" id="outMemTotal">—</span></div>
                 </div>
             </div>
-
             <div>
                 <div class="output-box" style="background-color: #34495e;">
                     <h3 style="color:white; margin-top:0; border-bottom:1px solid #aaa; padding-bottom:10px;">Network Accessories</h3>
-                    
-                    <div class="output-row">
-                        <span>Internal Network Type</span>
-                        <span class="output-val" id="outNetType">Direct Connect</span>
-                    </div>
-                    <div class="output-row">
-                        <span>25G NICs (Dual Port)</span>
-                        <span class="output-val" id="out25gNic">2</span>
-                    </div>
-                    <div class="output-row">
-                        <span>25G Optical Modules</span>
-                        <span class="output-val" id="out25gMod">4</span>
-                    </div>
-                    <div class="output-row">
-                        <span>LC-LC Cables</span>
-                        <span class="output-val" id="outLcCables">2</span>
-                    </div>
-                    <div class="output-row" id="rowSwitch" style="display:none;">
-                        <span>25G/100G Switches</span>
-                        <span class="output-val" id="outSwitches">0</span>
-                    </div>
-                     <div class="output-row" id="rowMPO" style="display:none;">
-                        <span>100G Interconnect (MPO)</span>
-                        <span class="output-val" id="outMPO">0</span>
-                    </div>
+                    <div class="output-row"><span>Storage Private Network</span><span class="output-val" id="outNetType">—</span></div>
+                    <div class="output-row"><span>25G Storage NICs</span><span class="output-val" id="out25gNic">—</span></div>
+                    <div class="output-row"><span>25G Optical Modules</span><span class="output-val" id="out25gMod">—</span></div>
+                    <div class="output-row"><span>LC-LC / DAC Cables (storage)</span><span class="output-val" id="outLcCables">—</span></div>
+                    <div class="output-row hidden" id="rowSwitch"><span>25G Storage Switches</span><span class="output-val" id="outSwitches">—</span></div>
+                    <div class="output-row hidden" id="rowMPO"><span>Switch Interconnect (MPO)</span><span class="output-val" id="outMPO">—</span></div>
+                    <div class="output-row"><span>Business NICs/HBAs</span><span class="output-val" id="outUplinkCount">—</span></div>
+                    <div class="output-row"><span>Business Cables</span><span class="output-val" id="outUplinkCables">—</span></div>
+                    <div class="output-row"><span>Business Optical Modules</span><span class="output-val" id="outUplinkModules">—</span></div>
                 </div>
             </div>
         </div>
-        <div class="alert" style="margin-top: 20px;">
+
+        <div class="alert alert-blue" style="margin-top: 20px;" id="licenseNote">
             <strong>Licensing Guide:</strong><br>
-            • F3000T: Balanced All-Flash License<br>
-            • F6000T: Performance All-Flash License<br>
-            • Q-Series: Capacity All-Flash License<br>
-            Note: License capacity is based on <strong>Raw Capacity</strong>.
+            • F3000T → Balanced All-Flash License (均衡型全闪存储授权)<br>
+            • F6000T → Performance All-Flash License (性能型全闪存储授权)<br>
+            • F3000Q / F6000Q → Capacity All-Flash License (容量型全闪存储授权)<br>
+            License capacity is evaluated on <strong>data-disk raw capacity only</strong> (cache disks excluded). Required total license capacity ≥ sum of raw capacity of all data disks in the cluster. Licenses can be stacked/combined.
         </div>
     </div>
 
     <footer>
-        Generated by Sangfor EDS Sizing Assistant • Logic mirrors official Excel Tool V2.0
+        Generated by Sangfor aStor-EDS Sizing Assistant · Sizing logic mirrors the official EDS V5.3 Selection Guide (Excel V4.2) · Internal use for pre-sales &amp; enablement only
     </footer>
 </div>
 
 <script>
-    // Constants
-    const CONVERSION_FACTOR = 931 / 1024; // Decimal to Binary TB
-    const SYSTEM_OVERHEAD = 0.9;
-    
-    // Disk Options
-    const DISKS_T = [
-        { val: 3.84, label: "3.84 TB NVMe TLC" },
-        { val: 7.68, label: "7.68 TB NVMe TLC" },
-        { val: 15.36, label: "15.36 TB NVMe TLC" }
-    ];
-    
-    const DISKS_Q = [
-        { val: 15.36, label: "15.36 TB NVMe QLC (w/ 3.84T Cache)" },
-        { val: 30.72, label: "30.72 TB NVMe QLC (w/ 7.68T Cache)" }
-    ];
+/* ============================================================
+   CONSTANTS — mirror the Excel workbook exactly
+   ============================================================ */
+const T_SPECS   = [3.84, 7.68, 15.36];
+const T_COEFF   = {3.84: 1, 7.68: 1.68, 15.36: 2.09};
+const T_EC      = [4, 8, 12, 16, 20];      // N values; EC = N+2
+const T_RANGE   = [8, 24];
 
-    // State
-    let selectedEC = null; // Object { name, d, p }
-    let calculatedDiskCount = 0;
-    
-    // Initialization
-    window.onload = function() {
-        updateUIForSeries();
-    };
+const Q_SPECS   = [15.36, 30.72];
+const Q_COEFF   = {15.36: 1, 30.72: 1.846};
+const Q_EC      = [4, 8, 12, 16];          // Q-series never supports EC20+2
+const Q_RANGE   = [8, 20];                  // max 20 data disks (4 slots reserved for cache)
 
-    function updateUIForSeries() {
-        const series = document.getElementById('modelSeries').value;
-        const diskSelect = document.getElementById('diskSize');
-        const modelDesc = document.getElementById('modelDesc');
-        const cacheNote = document.getElementById('cacheNote');
+const CACHE_PAIR = {15.36: 3.84, 30.72: 7.68};
 
-        diskSelect.innerHTML = "";
-        
-        if (series === 'T') {
-            DISKS_T.forEach(d => {
-                let opt = document.createElement('option');
-                opt.value = d.val;
-                opt.innerText = d.label;
-                diskSelect.appendChild(opt);
-            });
-            // Default 7.68
-            diskSelect.value = 7.68;
-            modelDesc.innerText = "Suitable for High Performance Block & File storage.";
-            cacheNote.style.display = 'none';
-        } else {
-            DISKS_Q.forEach(d => {
-                let opt = document.createElement('option');
-                opt.value = d.val;
-                opt.innerText = d.label;
-                diskSelect.appendChild(opt);
-            });
-            modelDesc.innerText = "Suitable for Massive File storage. Requires Cache disks.";
-            cacheNote.style.display = 'block';
+/* ============================================================
+   CORE CAPACITY MATH (Sheet "1.数据盘选型工具")
+   ============================================================ */
+function usableFromRaw(rawTB, N) {
+    // Usable(TiB) = (Raw*931/1024*0.9 - 0.352) * N/(N+2)
+    return (rawTB * 931 / 1024 * 0.9 - 0.352) * N / (N + 2);
+}
+
+function minDisksForEC(N) { return N + 4; } // 2 parity + 2 hot-spare reserve
+
+function bestEC(count, ecLevels) {
+    const candidates = ecLevels.filter(N => count >= minDisksForEC(N));
+    if (candidates.length === 0) return null;
+    return Math.max(...candidates);
+}
+
+function buildRows(specs, coeff, range, ecLevels) {
+    const rows = [];
+    for (const spec of specs) {
+        for (let count = range[0]; count <= range[1]; count++) {
+            const raw = spec * count;
+            const N = bestEC(count, ecLevels);
+            const usable = (N !== null) ? usableFromRaw(raw, N) : null;
+            rows.push({ spec, count, raw, N, usable, cost: count * coeff[spec] });
         }
-        recalc();
+    }
+    return rows;
+}
+
+function recommend(rows, targetTiB) {
+    const valid = rows.filter(r => r.usable !== null && r.usable >= targetTiB);
+    if (valid.length === 0) return { preferred: null, alternate: null };
+    // stable sort preserves natural (spec asc, count asc) order for ties -> matches Excel MATCH(MIN(...))
+    const byCost = valid.slice().sort((a, b) => a.cost - b.cost);
+    const preferred = byCost[0];
+    const altPool = byCost.filter(r => r.spec !== preferred.spec);
+    const alternate = altPool.length ? altPool[0] : null;
+    return { preferred, alternate };
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let selectedConfig = null; // { spec, count, N, raw, usable, source }
+
+/* ============================================================
+   INIT / SERIES CHANGE
+   ============================================================ */
+window.onload = function () {
+    onSeriesChange();
+};
+
+function currentSeries() { return document.getElementById('modelSeries').value; }
+
+function onSeriesChange() {
+    const series = currentSeries();
+    const modelDesc = document.getElementById('modelDesc');
+    const manualSpec = document.getElementById('manualSpec');
+    const cacheCard = document.getElementById('cacheCard');
+
+    manualSpec.innerHTML = '';
+    const specs = series === 'T' ? T_SPECS : Q_SPECS;
+    specs.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s + ' TB';
+        manualSpec.appendChild(opt);
+    });
+    document.getElementById('manualCount').max = series === 'T' ? 24 : 20;
+    if (series === 'T') {
+        modelDesc.textContent = 'Performance/Balanced tier, all-TLC. Supports Block & File storage.';
+        cacheCard.classList.add('hidden');
+    } else {
+        modelDesc.textContent = 'Capacity tier, QLC data + TLC cache. File storage only.';
+        cacheCard.classList.remove('hidden');
     }
 
-    function toggleCapacityInput() {
-        // Just triggers recalc as logic handles the swap
-        recalc();
+    // Uplink type: remove HBA option for Q-series
+    const uplinkType = document.getElementById('uplinkType');
+    const hbaOpt = uplinkType.querySelector('option[value="HBA"]');
+    if (series === 'Q') {
+        hbaOpt.disabled = true;
+        if (uplinkType.value === 'HBA') uplinkType.value = '100G';
+    } else {
+        hbaOpt.disabled = false;
     }
 
-    function recalc() {
-        const series = document.getElementById('modelSeries').value;
-        const mode = document.getElementById('calcMode').value; // usableToRaw or rawToUsable
-        const inputVal = parseFloat(document.getElementById('inputCapacity').value) || 0;
-        const diskSize = parseFloat(document.getElementById('diskSize').value);
-        const tbody = document.getElementById('capacityBody');
-        
-        tbody.innerHTML = "";
-        selectedEC = null; // Reset selection
+    selectedConfig = null;
+    recalcAll();
+}
 
-        // Define EC Strategies
-        let strategies = [
-            { name: "EC 4+2", d: 4, p: 2, minDiskT: 8, minDiskQ: 8 },
-            { name: "EC 8+2", d: 8, p: 2, minDiskT: 12, minDiskQ: 12 },
-            { name: "EC 12+2", d: 12, p: 2, minDiskT: 16, minDiskQ: 16 },
-            { name: "EC 16+2", d: 16, p: 2, minDiskT: 20, minDiskQ: 20 }
-        ];
+function recalcAll() {
+    computeRecommendation();
+    renderManualTable();
+    updateSelectedConfigBox();
+    computeCache();
+    computeMemory();
+    computeNetwork();
+    computeSummary();
+}
 
-        // EC 20+2 only for T series
-        if (series === 'T') {
-            strategies.push({ name: "EC 20+2", d: 20, p: 2, minDiskT: 24, minDiskQ: 999 });
-        }
+/* ============================================================
+   STEP 2 — RECOMMENDATION ENGINE
+   ============================================================ */
+function fmt(n, d) { return (n === null || n === undefined || isNaN(n)) ? '—' : n.toFixed(d === undefined ? 2 : d); }
 
-        strategies.forEach((strat, index) => {
-            let ratio = strat.d / (strat.d + strat.p);
-            let raw, usable;
+function computeRecommendation() {
+    const series = currentSeries();
+    const target = parseFloat(document.getElementById('targetUsable').value) || 0;
 
-            if (mode === 'usableToRaw') {
-                usable = inputVal;
-                // Formula: Usable = Raw * Conv * Ratio * 0.9
-                // Raw = Usable / (0.9 * Ratio * Conv)
-                raw = usable / (SYSTEM_OVERHEAD * ratio * CONVERSION_FACTOR);
-            } else {
-                raw = inputVal;
-                usable = raw * CONVERSION_FACTOR * ratio * SYSTEM_OVERHEAD;
-            }
+    const rows = series === 'T'
+        ? buildRows(T_SPECS, T_COEFF, T_RANGE, T_EC)
+        : buildRows(Q_SPECS, Q_COEFF, Q_RANGE, Q_EC);
 
-            // Disk Count Calculation
-            // For Q series, this is DATA DISKS only
-            let disksNeeded = Math.ceil(raw / diskSize);
-            
-            // Apply Min Constraints per stripe width (Logic: min disks must satisfy stripe width at least? 
-            // Actually the tool focuses on Min Per Chassis. Let's just calculate raw disks needed for capacity first.
-            // Hardware sizing step will align to chassis constraints.
-            
-            let minPerChassis = (series === 'T') ? strat.minDiskT : strat.minDiskQ;
-            
-            // Create Row
-            let tr = document.createElement('tr');
-            tr.onclick = () => selectStrategy(tr, strat, disksNeeded, raw);
-            
-            // Check viability
-            let note = "";
-            let noteClass = "tag-rec";
-            
-            // Simple logic from excel: warn if disks are low
-            if (disksNeeded < minPerChassis) {
-                note = "Low efficiency";
-                noteClass = "tag-warn";
-            } else {
-                note = "Recommended";
-            }
+    const { preferred, alternate } = recommend(rows, target);
 
-            tr.innerHTML = `
-                <td><input type="radio" name="ecSelect" ${index===1 ? "checked" : ""}></td>
-                <td><strong>${strat.name}</strong></td>
-                <td>${raw.toFixed(2)}</td>
-                <td>${usable.toFixed(2)}</td>
-                <td>${disksNeeded}</td>
-                <td>${minPerChassis}</td>
-                <td><span class="tag ${noteClass}">${note}</span></td>
-            `;
-            
-            tbody.appendChild(tr);
+    renderRecCard('pref', preferred, series, 'No feasible configuration within a single chassis (24 slots) meets this target. Reduce the target or split across more chassis.');
+    renderRecCard('alt', alternate, series, 'No alternate disk spec can meet this target on its own within a single chassis.');
 
-            // Default select 8+2 if available, or first
-            if (selectedEC === null || strat.name === "EC 8+2") {
-                selectStrategy(tr, strat, disksNeeded, raw);
+    document.getElementById('prefBtn').disabled = !preferred;
+    document.getElementById('altBtn').disabled = !alternate;
+
+    computeRecommendation._last = { preferred, alternate };
+}
+
+function renderRecCard(prefix, cfg, series, emptyMsg) {
+    const body = document.getElementById(prefix + 'Body');
+    const card = document.getElementById(prefix + 'Card');
+    if (!cfg) {
+        body.innerHTML = `<div class="alert alert-red" style="margin:0;">${emptyMsg}</div>`;
+        card.classList.add('unavailable');
+        return;
+    }
+    card.classList.remove('unavailable');
+    const cacheLine = series === 'Q'
+        ? `<div class="rec-line"><span>Paired Cache Disks</span><b>4 × ${CACHE_PAIR[cfg.spec]} TB (min.)</b></div>`
+        : '';
+    body.innerHTML = `
+        <div class="rec-line"><span>Data Disk Spec</span><b>${cfg.spec} TB</b></div>
+        <div class="rec-line"><span>Data Disk Count</span><b>${cfg.count}</b></div>
+        <div class="rec-line"><span>EC Strategy</span><b>EC${cfg.N}+2</b></div>
+        <div class="rec-line"><span>Raw Capacity</span><b>${fmt(cfg.raw)} TB</b></div>
+        <div class="rec-line"><span>Usable Capacity</span><b>${fmt(cfg.usable)} TiB</b></div>
+        ${cacheLine}
+    `;
+}
+
+function applyRecommendation(which) {
+    const last = computeRecommendation._last;
+    if (!last) return;
+    const cfg = which === 'preferred' ? last.preferred : last.alternate;
+    if (!cfg) return;
+    selectedConfig = { spec: cfg.spec, count: cfg.count, N: cfg.N, raw: cfg.raw, usable: cfg.usable, source: which === 'preferred' ? 'Preferred (auto)' : 'Alternate (auto)' };
+    document.getElementById('prefCard').classList.toggle('active', which === 'preferred');
+    document.getElementById('altCard').classList.toggle('active', which === 'alternate');
+    afterConfigSelected();
+}
+
+/* ============================================================
+   STEP 2 — MANUAL EXPLORER TABLE
+   ============================================================ */
+function renderManualTable() {
+    const series = currentSeries();
+    const spec = parseFloat(document.getElementById('manualSpec').value);
+    let count = parseInt(document.getElementById('manualCount').value) || 0;
+    const range = series === 'T' ? T_RANGE : Q_RANGE;
+    const ecLevels = series === 'T' ? T_EC : Q_EC;
+    const target = parseFloat(document.getElementById('targetUsable').value) || 0;
+
+    count = Math.max(range[0], Math.min(range[1], count));
+    document.getElementById('manualCount').value = count;
+    document.getElementById('manualCount').min = range[0];
+    document.getElementById('manualCount').max = range[1];
+
+    const raw = spec * count;
+    const tbody = document.getElementById('manualBody');
+    tbody.innerHTML = '';
+
+    ecLevels.forEach(N => {
+        const minDisks = minDisksForEC(N);
+        const supported = count >= minDisks;
+        const usable = supported ? usableFromRaw(raw, N) : null;
+        const meets = supported && usable >= target;
+
+        const tr = document.createElement('tr');
+        if (!supported) tr.classList.add('row-disabled');
+        else tr.classList.add('selectable');
+
+        let statusTag = '';
+        if (!supported) statusTag = `<span class="tag tag-info">Not supported (needs ${minDisks}+ disks)</span>`;
+        else if (meets) statusTag = `<span class="tag tag-rec">Meets target</span>`;
+        else statusTag = `<span class="tag tag-warn">Below target</span>`;
+
+        tr.innerHTML = `
+            <td><input type="radio" name="manualEC" ${!supported ? 'disabled' : ''}></td>
+            <td><strong>EC${N}+2</strong></td>
+            <td>${minDisks}</td>
+            <td>${fmt(raw)}</td>
+            <td>${supported ? fmt(usable) : '—'}</td>
+            <td>${statusTag}</td>
+        `;
+        if (supported) {
+            tr.onclick = () => {
+                tbody.querySelectorAll('tr').forEach(r => r.classList.remove('selected-row'));
+                tr.classList.add('selected-row');
                 tr.querySelector('input').checked = true;
-            }
-        });
+                selectedConfig = { spec, count, N, raw, usable, source: 'Manual' };
+                document.getElementById('prefCard').classList.remove('active');
+                document.getElementById('altCard').classList.remove('active');
+                afterConfigSelected();
+            };
+        }
+        tbody.appendChild(tr);
+    });
+}
+
+function afterConfigSelected() {
+    updateSelectedConfigBox();
+    // Sync cache section defaults
+    if (currentSeries() === 'Q' && selectedConfig) {
+        document.getElementById('cacheDataCount').value = selectedConfig.count;
+        document.getElementById('cacheSpecDisplay').value = CACHE_PAIR[selectedConfig.spec];
+    }
+    computeCache();
+    computeMemory();
+    computeNetwork();
+    computeSummary();
+}
+
+function updateSelectedConfigBox() {
+    const box = document.getElementById('selectedConfigBox');
+    if (!selectedConfig) {
+        box.classList.add('empty');
+        box.innerHTML = 'No configuration selected yet — pick Preferred / Alternate above, or a manual EC row.';
+        return;
+    }
+    box.classList.remove('empty');
+    const c = selectedConfig;
+    box.innerHTML = `<strong>Selected (${c.source}):</strong> ${c.count} × ${c.spec}TB data disks, EC${c.N}+2 &nbsp;→&nbsp; Raw ${fmt(c.raw)} TB / Usable ${fmt(c.usable)} TiB per chassis.`;
+}
+
+/* ============================================================
+   STEP 3 — Q-SERIES CACHE DISK / FILE-COUNT CHECK
+   (Sheet "3.Q系列型号器缓存盘选型说明")
+   ============================================================ */
+function metadataSizeKB(avgKB) {
+    if (avgKB <= 32) return 0.9;
+    if (avgKB <= 1024) return 1.1;
+    if (avgKB <= 10485760) return avgKB / 1000 + 0.55;
+    return avgKB / 150 + 0.55;
+}
+
+function computeCache() {
+    if (currentSeries() !== 'Q') return;
+
+    const cacheCount = parseInt(document.getElementById('cacheCount').value) || 0;
+    const cacheSpec = parseFloat(document.getElementById('cacheSpecDisplay').value) || 0;
+    const avgFileKB = parseFloat(document.getElementById('avgFileSize').value) || 1;
+    const dataCount = parseInt(document.getElementById('cacheDataCount').value) || 0;
+    const dataSpec = selectedConfig ? selectedConfig.spec : parseFloat(document.getElementById('manualSpec').value);
+    const N = selectedConfig ? selectedConfig.N : bestEC(dataCount, Q_EC);
+
+    const tbody = document.getElementById('cacheResultBody');
+    const verdicts = document.getElementById('cacheVerdicts');
+
+    if (!N) {
+        tbody.innerHTML = `<tr><td colspan="2">Select a valid data disk configuration in Step 2 first.</td></tr>`;
+        verdicts.innerHTML = '';
+        return;
     }
 
-    function selectStrategy(row, strat, disks, rawCap) {
-        // Highlight logic
-        const rows = document.querySelectorAll('#capacityBody tr');
-        rows.forEach(r => r.classList.remove('selected-row'));
-        row.classList.add('selected-row');
-        row.querySelector('input').checked = true;
+    // TLC cache: physical (1 disk reserved for failure) and logical (after op) capacity
+    const G_tlcPhysical = (cacheCount - 1) * cacheSpec * Math.pow(1000, 4) / Math.pow(1024, 4);
+    const H_tlcLogical = (G_tlcPhysical - (80 / 1024) * 5) * 0.85 / 3;
+    const I_metaKB = metadataSizeKB(avgFileKB);
 
-        selectedEC = strat;
-        calculatedDiskCount = disks;
-        
-        recalcHardware();
+    // QLC data: physical and logical (post-EC) capacity
+    const J_qlcPhysical = dataCount * dataSpec * Math.pow(1000, 4) / Math.pow(1024, 4);
+    const K_qlcLogical = J_qlcPhysical * 0.9 * N / (N + 2);
+
+    // File-count capacity (in 亿 = 100 million files)
+    const L_cacheFileCount = H_tlcLogical * 0.9 * Math.pow(1024, 3) / I_metaKB / 10000 / 10000 / 2;
+    const M_dataFileCount = K_qlcLogical * 0.95 * Math.pow(1024, 3) / avgFileKB / 10000 / 10000;
+
+    const overLimit = (cacheCount + dataCount) > 24;
+    const ecUnsupported = dataCount < N + 4;
+    const cacheSufficient = L_cacheFileCount > M_dataFileCount;
+
+    tbody.innerHTML = `
+        <tr><th>TLC physical capacity (1 disk reserved for rebuild)</th><td>${fmt(G_tlcPhysical)} TiB</td></tr>
+        <tr><th>TLC logical (post over-provisioning) capacity</th><td>${fmt(H_tlcLogical)} TiB</td></tr>
+        <tr><th>Metadata size per file</th><td>${fmt(I_metaKB, 3)} KB</td></tr>
+        <tr><th>QLC physical capacity</th><td>${fmt(J_qlcPhysical)} TiB</td></tr>
+        <tr><th>QLC logical (post-EC${N}+2) capacity</th><td>${fmt(K_qlcLogical)} TiB</td></tr>
+        <tr><th>File-count capacity supported by cache disks</th><td>${fmt(L_cacheFileCount)} × 10<sup>8</sup> files</td></tr>
+        <tr><th>File-count capacity supported by data disks</th><td>${fmt(M_dataFileCount)} × 10<sup>8</sup> files</td></tr>
+    `;
+
+    verdicts.innerHTML = `
+        <span class="tag ${overLimit ? 'tag-err' : 'tag-rec'}">${overLimit ? 'Slot limit exceeded (cache+data > 24)' : 'Slot count OK (≤24)'}</span>
+        <span class="tag ${ecUnsupported ? 'tag-err' : 'tag-rec'}">${ecUnsupported ? `EC${N}+2 needs ${N + 4}+ data disks` : `EC${N}+2 supported`}</span>
+        <span class="tag ${cacheSufficient ? 'tag-rec' : 'tag-warn'}">${cacheSufficient ? 'Cache capacity sufficient — data disks fill up first' : 'Cache may bottleneck — increase cache disks/capacity'}</span>
+    `;
+}
+
+/* ============================================================
+   STEP 4 — MEMORY SIZING (Sheet "⭐2.软硬件选型说明" + "2-1.内存选型说明")
+   ============================================================ */
+function computeMemory() {
+    const modelType = document.getElementById('modelType').value; // '3000' | '6000'
+    const chassisCount = Math.max(1, parseInt(document.getElementById('chassisCount').value) || 1);
+    const totalSmb = parseFloat(document.getElementById('smbClients').value) || 0;
+    const featureEnabled = document.getElementById('featureFlags').checked;
+    const diskSpec = selectedConfig ? selectedConfig.spec : null;
+    const bigDisk = diskSpec !== null && diskSpec >= 15.36;
+
+    const perController = totalSmb / (chassisCount * 2);
+    document.getElementById('perControllerNote').textContent =
+        `Per-controller ≈ ${fmt(perController, 0)} (total ÷ ${chassisCount} chassis ÷ 2 controllers)`;
+    document.getElementById('diskMemNote').textContent = bigDisk
+        ? `Selected data disk (${diskSpec}TB) is ≥15.36TB → triggers ≥128GB/controller requirement.`
+        : 'Data disk spec < 15.36TB — no memory add-on triggered by disk size alone.';
+
+    const base = modelType === '3000' ? 64 : 128; // GB per controller
+    let required = base;
+    let triggers = [];
+
+    if (modelType === '3000') {
+        if (perController > 250 && perController < 1000) { required = Math.max(required, 128); triggers.push('SMB 250–1000/controller'); }
+        if (perController > 1000 && perController < 2000) { required = Math.max(required, 256); triggers.push('SMB 1000–2000/controller'); }
+        if (bigDisk) { required = Math.max(required, 128); triggers.push('Data disk ≥15.36TB'); }
+        if (featureEnabled) { required = Math.max(required, 128); triggers.push('Data-copy features'); }
+    } else {
+        if (perController > 1000 && perController < 2000) { required = Math.max(required, 256); triggers.push('SMB 1000–2000/controller'); }
     }
 
-    function recalcHardware() {
-        if (!selectedEC) return;
+    let sticks = 0;
+    if (modelType === '3000') {
+        sticks = required >= 256 ? 12 : (required >= 128 ? 4 : 0);
+    } else {
+        sticks = required >= 256 ? 8 : 0;
+    }
 
-        const series = document.getElementById('modelSeries').value;
-        const diskSize = parseFloat(document.getElementById('diskSize').value);
-        const smbClients = parseInt(document.getElementById('smbClients').value) || 0;
-        const featureEnabled = document.getElementById('featureFlags').checked;
-        const modelType = document.getElementById('modelType').value;
+    const totalPerChassis = base * 2 + sticks * 32;
+    const totalCluster = totalPerChassis * chassisCount;
 
-        // --- 1. Chassis & Disk Calculation ---
-        let totalDataDisks = calculatedDiskCount;
-        let chassisCount = 1;
-        let disksPerChassis = 0;
-        let totalCacheDisks = 0;
+    computeMemory._result = { base, required, sticks, totalPerChassis, totalCluster, triggers, chassisCount };
 
-        // Constraints
-        const MAX_SLOTS = 24;
-        const Q_CACHE_SLOTS = 4;
-        
-        if (series === 'T') {
-            // T Series: All slots for data
-            // Min disks per chassis check
-            let minDisks = selectedEC.minDiskT;
-            
-            // Logic: Distribute disks across chassis. 
-            // If totalDataDisks > 24, need 2 chassis.
-            // Max 4 chassis supported in this tool scope.
-            
-            chassisCount = Math.ceil(totalDataDisks / MAX_SLOTS);
-            if (chassisCount > 4) chassisCount = 4; // Hard cap for sizing tool v1
-            
-            // Ensure min disks per chassis
-            // Actually, we need to ensure Total Disks >= Min Disks for EC
-            // AND Total Disks / Chassis Count >= Min Disks ? 
-            // The Excel says: "If EC4+2, need 8 disks per chassis".
-            
-            if (totalDataDisks < minDisks) totalDataDisks = minDisks;
-            
-            // Re-calc chassis after min enforcement
-            chassisCount = Math.ceil(totalDataDisks / MAX_SLOTS);
-            
-            // Ensure min disks per chassis is met
-            if (totalDataDisks / chassisCount < minDisks) {
-                // If we split to 2 chassis but don't have enough disks for min config per chassis
-                // usually we add disks.
-                totalDataDisks = minDisks * chassisCount;
-            }
+    document.getElementById('memoryResultBody').innerHTML = `
+        <tr><th>Base memory (standard config)</th><td>${base * 2} GB/chassis (${base} GB/controller)</td></tr>
+        <tr><th>Required memory tier</th><td>${required} GB/controller ${triggers.length ? '— triggered by: ' + triggers.join(', ') : '(base config sufficient)'}</td></tr>
+        <tr><th>Add-on DIMMs</th><td>${sticks > 0 ? sticks + ' × 32GB per chassis (' + (sticks * chassisCount) + ' total)' : 'None required'}</td></tr>
+        <tr><th>Total memory / chassis</th><td><strong>${totalPerChassis} GB</strong></td></tr>
+        <tr><th>Total memory — cluster (${chassisCount} chassis)</th><td><strong>${totalCluster} GB</strong></td></tr>
+    `;
 
-        } else {
-            // Q Series: 24 Slots = 4 Cache + 20 Data max
-            let maxDataPerBox = 20;
-            let minDataPerBox = selectedEC.minDiskQ; // e.g., 12 for 8+2
-            
-            chassisCount = Math.ceil(totalDataDisks / maxDataPerBox);
-            if (chassisCount > 4) chassisCount = 4;
+    computeSummary();
+}
 
-            // Enforce min data disks
-            if (totalDataDisks < minDataPerBox) totalDataDisks = minDataPerBox;
-            
-            // Recalc chassis
-            chassisCount = Math.ceil(totalDataDisks / maxDataPerBox);
+/* ============================================================
+   STEP 5 — NETWORK ACCESSORIES
+   ============================================================ */
+function computeNetwork() {
+    const chassisCount = Math.max(1, parseInt(document.getElementById('chassisCount').value) || 1);
+    const totalControllers = chassisCount * 2;
+    const uplinkType = document.getElementById('uplinkType').value;
+    let uplinkCount = parseInt(document.getElementById('uplinkCount').value) || 0;
 
-            // Enforce min per box
-            if (totalDataDisks / chassisCount < minDataPerBox) {
-                totalDataDisks = minDataPerBox * chassisCount;
-            }
-            
-            // Cache Disks
-            totalCacheDisks = chassisCount * 4;
-        }
-        
-        // --- 2. Memory Sizing ---
-        let baseMemPerNode = (modelType === '3000') ? 64 : 128; // GB
-        let requiredMemPerNode = baseMemPerNode;
-        let addOnMsg = "None";
+    const minUplink = chassisCount === 1 ? 2 : totalControllers;
+    document.getElementById('uplinkMinNote').textContent = `Leave at 0 to auto-fill the minimum recommended count (${minUplink}).`;
+    if (uplinkCount <= 0) uplinkCount = minUplink;
+    uplinkCount = Math.max(uplinkCount, minUplink);
 
-        // Logic Source 2:
-        // F3000(T/Q):
-        //   250 < SMB < 1000 -> Need 128G/node (+64G) -> +4x32G sticks per chassis (2 nodes)
-        //   1000 < SMB < 2000 -> Need 256G/node (+192G?? No, check text)
-        //   Text says: "F3000... 1000<SMB<2000... need 256GB... add 12x32G" (12*32=384? No. 12 sticks per server/chassis?
-        //   Let's stick to the Text:
-        //   F3000:
-        //     Rule A: 250<SMB<1000 OR Features=True -> Need 128G/node. Base 64. Add 4x32G per chassis.
-        //     Rule B: 1000<SMB<2000 -> Need 256G/node. Base 64. Add 12x32G per chassis.
-        //   F6000:
-        //     Base 128.
-        //     Rule: 1000<SMB<2000 -> Need 256G/node. Add 8x32G per chassis.
-        
-        let addSticksPerChassis = 0;
+    // Storage private network
+    let net;
+    if (chassisCount === 1) {
+        net = { type: 'Direct-connect (no switch) — controllers cross-wired', nic: 2, modules: 4, cables: 2, switches: 0, mpo: 0 };
+    } else {
+        const nic = totalControllers;
+        net = {
+            type: 'Switched (25G RoCEv2/TCP)',
+            nic: nic,
+            modules: nic * 4,
+            cables: nic * 2,
+            switches: 2,
+            mpo: 2
+        };
+    }
 
-        if (modelType === '3000') {
-            if (smbClients > 1000 && smbClients <= 2000) {
-                requiredMemPerNode = 256;
-                addSticksPerChassis = 12; // 384GB added per chassis? (256-64)*2 = 384. Correct.
-            } else if ((smbClients > 250 && smbClients <= 1000) || featureEnabled) {
-                requiredMemPerNode = 128;
-                addSticksPerChassis = 4; // (128-64)*2 = 128GB. 4*32=128. Correct.
-            }
-        } else {
-            // F6000
-            if (smbClients > 1000 && smbClients <= 2000) {
-                requiredMemPerNode = 256;
-                addSticksPerChassis = 8; // (256-128)*2 = 256GB. 8*32=256. Correct.
-            }
-        }
+    // Business (front-end) network
+    let uplinkCables = 0, uplinkModules = 0, uplinkLabel = '';
+    if (uplinkType === '100G') {
+        uplinkCables = uplinkCount * 2; uplinkModules = 0;
+        uplinkLabel = '100GbE NIC (DAC cable, modules built-in)';
+    } else if (uplinkType === 'HBA') {
+        uplinkCables = uplinkCount * 2; uplinkModules = 0;
+        uplinkLabel = 'HBA (LC-LC fiber, modules built-in)';
+    } else {
+        uplinkCables = uplinkCount * 2; uplinkModules = uplinkCount * 4;
+        uplinkLabel = '10GbE NIC (LC-LC fiber + 10G optical modules)';
+    }
 
-        if (addSticksPerChassis > 0) {
-            addOnMsg = `${addSticksPerChassis} x 32GB DIMMs per Chassis (Total ${addSticksPerChassis * chassisCount} sticks)`;
-        }
+    computeNetwork._result = { net, uplinkType, uplinkLabel, uplinkCount, uplinkCables, uplinkModules };
 
-        // --- 3. Network Sizing ---
-        let netType = "Direct Connect (No Switch)";
-        let nicCount = 0;
-        let modCount = 0;
-        let cableCount = 0;
-        let switchCount = 0;
-        let mpoCount = 0;
+    document.getElementById('networkResultBody').innerHTML = `
+        <tr><th>Storage private network</th><td>${net.type}</td></tr>
+        <tr><th>25G storage NICs</th><td>${net.nic}</td></tr>
+        <tr><th>25G optical modules</th><td>${net.modules}</td></tr>
+        <tr><th>Storage cables (LC-LC)</th><td>${net.cables}</td></tr>
+        ${net.switches ? `<tr><th>25G storage switches</th><td>${net.switches}</td></tr>
+        <tr><th>Switch interconnect (MPO)</th><td>${net.mpo} MPO + 4× 100G modules</td></tr>` : ''}
+        <tr><th>Business network uplink</th><td>${uplinkLabel}</td></tr>
+        <tr><th>Business NICs/HBAs</th><td>${uplinkCount}</td></tr>
+        <tr><th>Business cables</th><td>${uplinkCables}</td></tr>
+        <tr><th>Business optical modules</th><td>${uplinkModules === 0 ? 'Built into card' : uplinkModules}</td></tr>
+    `;
 
-        // Controllers = Chassis * 2
-        let totalControllers = chassisCount * 2;
+    computeSummary();
+}
 
-        if (chassisCount === 1) {
-            // Scene 1: Single Chassis
-            // Storage Private: 2x 25G NICs, 4x Modules, 2 Cables (Direct)
-            nicCount = 2; // For Private Net
-            modCount = 4;
-            cableCount = 2;
-            netType = "Direct Connect (Single Chassis)";
-        } else {
-            // Scene 2: Multi Chassis
-            // Storage Private: 2x 25G Switches.
-            // NICs = Total Controllers.
-            // Cables = NICs * 2 (Redundant links?) Source 4: "LC-LC = 25G NICs * 2"
-            // Modules = NICs * 4 (2 on NIC, 2 on Switch?) Source 5: "25G Modules = 25G NICs * 4"
-            
-            switchCount = 2;
-            netType = "Switched (RoCE/TCP)";
-            nicCount = totalControllers;
-            cableCount = nicCount * 2;
-            modCount = nicCount * 4;
-            
-            // Interconnect for switches (MPO)
-            // Source 4: "2 MPO cables"
-            mpoCount = 2;
-        }
+/* ============================================================
+   STEP 6 — SUMMARY / BOM
+   ============================================================ */
+function licenseForModel(series, modelType) {
+    if (series === 'T') return modelType === '3000' ? 'Balanced All-Flash License (F3000T)' : 'Performance All-Flash License (F6000T)';
+    return 'Capacity All-Flash License (' + (modelType === '3000' ? 'F3000Q' : 'F6000Q') + ')';
+}
 
-        // --- Render Output ---
-        document.getElementById('outModel').innerText = `aStor-EDS-F${modelType}${series}`;
-        document.getElementById('outChassis').innerText = `${chassisCount} Chassis (${totalControllers} Controllers)`;
-        document.getElementById('outDataDisks').innerText = `${totalDataDisks} x ${diskSize}TB`;
-        
-        const rowCache = document.getElementById('rowCacheDisks');
+function computeSummary() {
+    const series = currentSeries();
+    const modelType = document.getElementById('modelType').value;
+    const chassisCount = Math.max(1, parseInt(document.getElementById('chassisCount').value) || 1);
+    const modelName = `aStor-EDS-F${modelType}${series}`;
+
+    document.getElementById('outModel').textContent = modelName;
+    document.getElementById('outLicense').textContent = licenseForModel(series, modelType);
+    document.getElementById('outChassis').textContent = `${chassisCount} chassis (${chassisCount * 2} controllers)`;
+
+    const rowCache = document.getElementById('rowCacheDisks');
+
+    if (selectedConfig) {
+        const perChassisData = selectedConfig.count;
+        const totalData = perChassisData * chassisCount;
+        const totalRaw = selectedConfig.raw * chassisCount;
+        const totalUsable = selectedConfig.usable * chassisCount;
+
+        document.getElementById('outDataDisksPer').textContent = `${perChassisData} × ${selectedConfig.spec}TB (EC${selectedConfig.N}+2)`;
+        document.getElementById('outDataDisksTotal').textContent = `${totalData} disks`;
+        document.getElementById('outRawTotal').textContent = `${fmt(totalRaw)} TB`;
+        document.getElementById('outUsableTotal').textContent = `${fmt(totalUsable)} TiB`;
+        document.getElementById('outLicenseCap').textContent = `≥ ${fmt(totalRaw)} TB`;
+
         if (series === 'Q') {
-            rowCache.style.display = 'flex';
-            let cacheSize = (diskSize === 15.36) ? 3.84 : 7.68;
-            document.getElementById('outCacheDisks').innerText = `${totalCacheDisks} x ${cacheSize}TB`;
+            const cacheCount = parseInt(document.getElementById('cacheCount').value) || 4;
+            rowCache.classList.remove('hidden');
+            document.getElementById('outCacheDisks').textContent = `${cacheCount * chassisCount} × ${CACHE_PAIR[selectedConfig.spec]}TB`;
         } else {
-            rowCache.style.display = 'none';
+            rowCache.classList.add('hidden');
         }
+    } else {
+        document.getElementById('outDataDisksPer').textContent = '—';
+        document.getElementById('outDataDisksTotal').textContent = '—';
+        document.getElementById('outRawTotal').textContent = '—';
+        document.getElementById('outUsableTotal').textContent = '—';
+        document.getElementById('outLicenseCap').textContent = '—';
+        rowCache.classList.add('hidden');
+    }
 
-        document.getElementById('outMem').innerText = `${requiredMemPerNode} GB`;
-        document.getElementById('outMemAddon').innerText = addOnMsg;
+    const mem = computeMemory._result;
+    if (mem) {
+        document.getElementById('outMem').textContent = `${mem.totalPerChassis} GB (${mem.required} GB/controller)`;
+        document.getElementById('outMemTotal').textContent = `${mem.totalCluster} GB`;
+    }
 
-        document.getElementById('outNetType').innerText = netType;
-        document.getElementById('out25gNic').innerText = nicCount;
-        document.getElementById('out25gMod').innerText = modCount;
-        document.getElementById('outLcCables').innerText = cableCount;
-        
+    const netRes = computeNetwork._result;
+    if (netRes) {
+        const net = netRes.net;
+        document.getElementById('outNetType').textContent = net.type;
+        document.getElementById('out25gNic').textContent = net.nic;
+        document.getElementById('out25gMod').textContent = net.modules;
+        document.getElementById('outLcCables').textContent = net.cables;
+
         const rowSwitch = document.getElementById('rowSwitch');
         const rowMPO = document.getElementById('rowMPO');
-        
-        if (switchCount > 0) {
-            rowSwitch.style.display = 'flex';
-            rowMPO.style.display = 'flex';
-            document.getElementById('outSwitches').innerText = switchCount + " x 25G Switches";
-            document.getElementById('outMPO').innerText = mpoCount + " x MPO Cables (+4x 100G Modules)";
+        if (net.switches > 0) {
+            rowSwitch.classList.remove('hidden');
+            rowMPO.classList.remove('hidden');
+            document.getElementById('outSwitches').textContent = net.switches + ' × 25G switches';
+            document.getElementById('outMPO').textContent = net.mpo + ' × MPO cables (+4× 100G modules)';
         } else {
-            rowSwitch.style.display = 'none';
-            rowMPO.style.display = 'none';
+            rowSwitch.classList.add('hidden');
+            rowMPO.classList.add('hidden');
         }
+
+        document.getElementById('outUplinkCount').textContent = netRes.uplinkCount;
+        document.getElementById('outUplinkCables').textContent = netRes.uplinkCables;
+        document.getElementById('outUplinkModules').textContent = netRes.uplinkModules === 0 ? 'Built-in' : netRes.uplinkModules;
     }
+}
 </script>
 
 </body>
