@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sangfor aStor-EDS Hybrid Flash Sizing Tool</title>
+    <style>
+        :root {
+            --primary: #0066cc;
+            --secondary: #f0f2f5;
+            --accent: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --text-dark: #333;
+            --text-light: #666;
+            --border: #ddd;
+        }
+
+        body {
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--secondary);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            background-color: #fff;
+            padding: 20px;
+            border-bottom: 3px solid var(--primary);
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+        h2 { font-size: 1.2rem; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        h3 { font-size: 1rem; }
+        .subtitle { font-size: 0.9rem; color: var(--text-light); }
+
+        /* Cards */
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Grid Layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+        }
+
+        /* Form Elements */
+        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
+        .note { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
+
+        select, input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .checkbox-group input { width: auto; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; font-size: 0.9rem; }
+        th { background-color: #f8f9fa; color: var(--text-dark); }
+        tr:hover { background-color: #f1f1f1; cursor: pointer; }
+
+        .selected-row { background-color: #e6f2ff !important; border-left: 4px solid var(--primary); }
+
+        /* Indicators */
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: white;
+        }
+        .tag-rec { background-color: var(--accent); }
+        .tag-warn { background-color: var(--warning); color: #333; }
+        .tag-err { background-color: var(--danger); }
+
+        /* Output Box */
+        .output-box {
+            background-color: #2c3e50;
+            color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .output-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #34495e;
+            padding-bottom: 5px;
+        }
+        .output-row:last-child { border-bottom: none; }
+        .output-val { font-weight: bold; color: #4dabf7; text-align: right; }
+
+        /* Footer */
+        footer { text-align: center; font-size: 0.8rem; color: var(--text-light); margin-top: 40px; }
+
+        .alert {
+            padding: 10px;
+            background-color: #e2e3e5;
+            border-left: 4px solid #383d41;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        .alert-warn { background-color: #fff8e1; border-left-color: var(--warning); }
+        .alert-err { background-color: #fdecea; border-left-color: var(--danger); }
+
+        .badge-group { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>Sangfor aStor-EDS Hybrid Flash Sizing Tool</h1>
+            <div class="subtitle">Configuration &amp; Capacity Calculator (v1.0 Web Edition)</div>
+        </div>
+        <div>
+            <span style="font-size: 0.8rem; color: #666;">Based on EDS V5.2.1r2 Selection Guide</span>
+        </div>
+    </header>
+
+    <div class="card">
+        <h2>1. Storage Type &amp; Cluster Planning</h2>
+        <div class="grid-3">
+            <div>
+                <label for="storageType">Storage Type</label>
+                <select id="storageType" onchange="onStorageTypeChange()">
+                    <option value="file">File / Object Storage (EC Redundancy)</option>
+                    <option value="block">Block Storage (Replica Redundancy)</option>
+                </select>
+                <div class="note" id="storageTypeNote">EDS cluster requires 3 nodes minimum. File/Object pool supports up to 24 nodes; Block pool up to 12 nodes.</div>
+            </div>
+            <div>
+                <label for="nodeCount">Cluster Node Count</label>
+                <input type="number" id="nodeCount" value="6" min="3" max="24" oninput="recalcAll()">
+                <div class="note" id="nodeCountNote">Minimum node count depends on redundancy strategy selected below.</div>
+            </div>
+            <div>
+                <label for="deployMode">Deployment Mode</label>
+                <select id="deployMode" onchange="recalcAll()">
+                    <option value="independent">Independent (Block OR File/Object per node)</option>
+                    <option value="converged">Converged (Block AND File/Object on same node)</option>
+                </select>
+                <div class="note">Converged deployment requires +64GB RAM/node (2x 32GB DIMMs).</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>2. Capacity Sizing</h2>
+        <div class="grid-3">
+            <div>
+                <label for="calcMode">Calculation Mode</label>
+                <select id="calcMode" onchange="recalcAll()">
+                    <option value="usableToRaw">Target: Usable Capacity → Calculate Raw</option>
+                    <option value="rawToUsable">Target: Raw Capacity → Calculate Usable</option>
+                </select>
+            </div>
+            <div>
+                <label for="inputCapacity">Input Capacity (TB)</label>
+                <input type="number" id="inputCapacity" value="200" min="1" oninput="recalcAll()">
+            </div>
+            <div>
+                <label for="dataDiskSize">Data Disk Specification (HDD)</label>
+                <select id="dataDiskSize" onchange="recalcAll()"></select>
+                <div class="note">HDD capacity options shown below.</div>
+            </div>
+        </div>
+
+        <div class="alert" style="margin-top: 15px;">
+            <strong>Formula (matches Excel capacity conversion tool):</strong><br>
+            <em>Usable = Raw × (931/1024) × [Data / (Data+Parity)] × 0.9</em> &nbsp;|&nbsp;
+            <em>Raw = Usable × (1024/931) × [(Data+Parity)/Data] ÷ 0.9</em><br>
+            1TB disk = 0.91TB actual (decimal→binary conversion). System overhead reserve = 10%.
+        </div>
+
+        <div id="capacityTableContainer">
+            <h3 id="strategyTableTitle">Redundancy Strategy Options (Select One)</h3>
+            <table id="capacityTable">
+                <thead>
+                    <tr>
+                        <th>Select</th>
+                        <th>Redundancy Strategy</th>
+                        <th>Space Efficiency</th>
+                        <th>Raw Cap (TB)</th>
+                        <th>Usable Cap (TB)</th>
+                        <th>Total Data Disks</th>
+                        <th>Min Nodes</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="capacityBody"></tbody>
+            </table>
+        </div>
+        <div id="strategyWarning"></div>
+    </div>
+
+    <div class="card">
+        <h2>3. Disk Configuration (Per Node)</h2>
+        <div class="grid-2">
+            <div>
+                <div class="output-box" style="background-color:#34495e;">
+                    <h3 style="color:white; margin-top:0; border-bottom:1px solid #aaa; padding-bottom:10px;">Data Disks</h3>
+                    <div class="output-row"><span>Total Data Disks Needed</span><span class="output-val" id="outTotalDataDisks">-</span></div>
+                    <div class="output-row"><span>Data Disks / Node</span><span class="output-val" id="outDataDisksPerNode">-</span></div>
+                    <div class="output-row"><span>Adjusted Total (after rounding)</span><span class="output-val" id="outAdjTotalDataDisks">-</span></div>
+                </div>
+                <div id="dataDiskNote" style="margin-top:10px;"></div>
+            </div>
+            <div>
+                <label for="cacheDiskCount">Cache (SSD) Disks / Node</label>
+                <input type="number" id="cacheDiskCount" value="2" min="1" max="4" oninput="recalcAll()">
+                <div class="note">1–4 SSDs per node supported by EDS software. No fixed capacity/quantity ratio to data disks for File/Object storage.</div>
+                <label for="cacheDiskSize" style="margin-top:12px;">Cache Disk Specification (SSD)</label>
+                <select id="cacheDiskSize" onchange="recalcAll()"></select>
+                <div id="blockRatioNote" style="margin-top:10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="ssdEvalCard">
+        <h2>4. SSD Cache &amp; Metadata (phxKV) Capacity Evaluation — File/Object Storage</h2>
+        <div class="alert">
+            This step answers a different question than Section 3: it checks whether your chosen <strong>cache SSD capacity</strong> is large enough to hold the metadata (phxKV) needed to actually address every file your <strong>data disks</strong> have room for. If the SSD is undersized, you will run out of "file slots" before the HDDs are full — wasting purchased HDD capacity.
+        </div>
+        <div class="grid-3">
+            <div>
+                <label for="ssdSubType">Pool Type</label>
+                <select id="ssdSubType" onchange="recalcAll()">
+                    <option value="nas">File Storage (NAS/SMB/NFS)</option>
+                    <option value="obj">Object Storage (S3)</option>
+                </select>
+            </div>
+            <div>
+                <label for="avgFileSize">Average File Size (KB)</label>
+                <input type="number" id="avgFileSize" value="32" min="1" oninput="recalcAll()">
+                <div class="note">e.g. for 1MB average, enter 1024.</div>
+            </div>
+            <div>
+                <label for="ssdScenario">Storage Scenario</label>
+                <select id="ssdScenario" onchange="recalcAll()"></select>
+                <div class="note">Determines the metadata vs. hot-data-cache split of your SSD capacity.</div>
+            </div>
+        </div>
+        <div class="grid-2" style="margin-top: 15px;">
+            <div class="checkbox-group">
+                <input type="checkbox" id="compressToggle" onchange="recalcAll()">
+                <label for="compressToggle" style="margin-bottom:0;">Enable File Compression</label>
+            </div>
+            <div>
+                <label for="compressRatio">Expected Lossless Compression Ratio (%)</label>
+                <input type="number" id="compressRatio" value="90" min="1" max="100" oninput="recalcAll()">
+                <div class="note">Compressed size ÷ original size, e.g. 100MB→30MB = 30%.</div>
+            </div>
+        </div>
+
+        <div class="output-box" style="margin-top:20px;">
+            <h3 style="color:white; margin-top:0; border-bottom:1px solid #aaa; padding-bottom:10px;">Per-Node Evaluation</h3>
+            <div class="output-row"><span>Metadata (phxKV) Capacity Reserved</span><span class="output-val" id="outPhxkvCap">-</span></div>
+            <div class="output-row"><span>Max File Count — SSD/Metadata-bound</span><span class="output-val" id="outMaxFileSsd">-</span></div>
+            <div class="output-row"><span>Max File Count — HDD/Capacity-bound</span><span class="output-val" id="outMaxFileHdd">-</span></div>
+            <div class="output-row"><span>Effective Max File Scale / Node</span><span class="output-val" id="outMaxFileScale">-</span></div>
+            <div class="output-row"><span>Data Disk Capacity Utilization</span><span class="output-val" id="outDiskUtil">-</span></div>
+        </div>
+        <div id="ssdEvalWarning" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card">
+        <h2>5. Server Model &amp; Memory Sizing</h2>
+        <div class="grid-2">
+            <div>
+                <label for="serverModel">Server Model</label>
+                <select id="serverModel" onchange="onModelChange()">
+                    <optgroup label="X86 Architecture">
+                        <option value="1150W">1150W (7 SATA + 4 front SATA/U.2)</option>
+                        <option value="1150X5">1150-X5 (8 SATA + 4 front SATA/U.2)</option>
+                        <option value="1210W">1210W (10 SATA + 2 front SATA/U.2)</option>
+                        <option value="1210X5">1210-X5 (10 SATA + 2 front SATA/U.2)</option>
+                        <option value="1250W">1250W (12 SATA + 2 rear U.2)</option>
+                        <option value="1250X5">1250-X5 (12 SATA + 2 rear U.2)</option>
+                        <option value="3650W">3650W (36 SATA + 4 rear U.2)</option>
+                        <option value="3650X5">3650-X5 (36 SATA + 4 rear U.2)</option>
+                    </optgroup>
+                </select>
+                <div class="note" id="modelSlotNote">Front bays accept SATA SSD/HDD or NVMe SSD; rear bays are NVMe-only.</div>
+                <div class="note" id="modelDimmNote" style="margin-top:6px;"></div>
+            </div>
+            <div>
+                <label for="featureFlag">Feature Requirements</label>
+                <select id="featureFlag" onchange="recalcAll()">
+                    <option value="basic">Basic (no additional feature)</option>
+                    <option value="metadata">Metadata Index (Object Storage search)</option>
+                    <option value="hdfs">HDFS</option>
+                    <option value="hdfsmeta">HDFS + Metadata Index</option>
+                </select>
+                <div class="note" id="featureNote"></div>
+                <label for="smbClients" style="margin-top:12px;">Total Estimated SMB/CIFS Clients (cluster-wide)</label>
+                <input type="number" id="smbClients" value="0" min="0" placeholder="e.g. 600" oninput="recalcAll()">
+                <div class="note" id="smbPerNodeNote">Per-node client count = Total ÷ Node Count.</div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="hpcToggle" onchange="recalcAll()">
+                    <label for="hpcToggle" style="margin-bottom:0;">High-performance workload (EDA / AI training / genomics HPC)</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="output-box" style="margin-top:20px;">
+            <h3 style="color:white; margin-top:0; border-bottom:1px solid #aaa; padding-bottom:10px;">Memory Requirement</h3>
+            <div class="output-row"><span>Minimum Required / Node</span><span class="output-val" id="outMemPerNode">-</span></div>
+            <div class="output-row"><span>Deliverable Config / Node (rounded to valid DIMM step)</span><span class="output-val" id="outMemActual">-</span></div>
+            <div class="output-row"><span>Total Cluster Memory (deliverable)</span><span class="output-val" id="outMemTotal">-</span></div>
+        </div>
+        <div id="memWarning" style="margin-top:10px;"></div>
+        <div id="memRecommendation" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card">
+        <h2>6. Network Sizing</h2>
+        <div class="grid-2">
+            <div>
+                <label for="netScenario">Network Scenario</label>
+                <select id="netScenario" onchange="recalcAll()">
+                    <option value="s1">Scenario 1: Business 10G + Storage Private 10G</option>
+                    <option value="s2">Scenario 2: Business 10G + Storage Private 25G</option>
+                    <option value="s3">Scenario 3: Business 25G + Storage Private 25G</option>
+                </select>
+                <div class="note">Uses the node count set in Section 1. Management network (2x GbE switches) is assumed customer-supplied and not itemized below.</div>
+            </div>
+            <div>
+                <div class="alert" id="netFormulaNote" style="margin-top:24px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>7. Configuration Summary (Bill of Materials)</h2>
+        <div class="grid-2">
+            <div>
+                <div class="output-box">
+                    <h3 style="color:white; margin-top:0; border-bottom:1px solid #aaa; padding-bottom:10px;">Server &amp; Storage Hardware</h3>
+                    <div class="output-row"><span>Server Model</span><span class="output-val" id="sumModel">-</span></div>
+                    <div class="output-row"><span>Node Count</span><span class="output-val" id="sumNodes">-</span></div>
+                    <div class="output-row"><span>Redundancy Strategy</span><span class="output-val" id="sumStrategy">-</span></div>
+                    <div class="output-row"><span>Data Disks (Total)</span><span class="output-val" id="sumDataDisks">-</span></div>
+                    <div class="output-row"><span>Cache Disks (Total)</span><span class="output-val" id="sumCacheDisks">-</span></div>
+                    <div class="output-row"><span>Memory / Node</span><span class="output-val" id="sumMem">-</span></div>
+                    <div class="output-row"><span>Usable Capacity</span><span class="output-val" id="sumUsable">-</span></div>
+                </div>
+            </div>
+            <div>
+                <div class="output-box" style="background-color: #34495e;">
+                    <h3 style="color:white; margin-top:0; border-bottom:1px solid #aaa; padding-bottom:10px;">Network Accessories</h3>
+                    <div class="output-row"><span>Network Scenario</span><span class="output-val" id="sumNetScenario">-</span></div>
+                    <div class="output-row"><span>Storage/Business Switches</span><span class="output-val" id="sumSwitches">-</span></div>
+                    <div class="output-row"><span>NICs (per node)</span><span class="output-val" id="sumNic">-</span></div>
+                    <div class="output-row"><span>Optical Modules</span><span class="output-val" id="sumModules">-</span></div>
+                    <div class="output-row"><span>LC-LC Cables</span><span class="output-val" id="sumLcCables">-</span></div>
+                    <div class="output-row" id="rowSumMpo" style="display:none;"><span>MPO Cables</span><span class="output-val" id="sumMpo">-</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="alert" style="margin-top: 20px;">
+            <strong>Licensing Guide:</strong><br>
+            • License capacity is evaluated on <strong>data disk raw capacity only</strong> (cache/SSD capacity is excluded).<br>
+            • Required rule: Total Licensed Capacity ≥ Total Raw Capacity of all data disks in the cluster. Licenses can be stacked/combined.<br>
+            • V5.0 Capacity license: cost-sensitive, high-capacity, lower performance priority. V5.0 Performance license: maximum performance, full-flash oriented.<br>
+            • For converged deployment with block-storage-primary workloads on 1210W/1210-X5/1150W/1150-X5, the Capacity license is recommended (Performance license runs extra MDS services that compete for CPU).
+        </div>
+        <div id="finalWarnings"></div>
+    </div>
+
+    <footer>
+        Generated by Sangfor EDS Hybrid Flash Sizing Assistant • Logic mirrors Sangfor EDS V5.2.1r2 Selection Guide (Feb 2026)
+    </footer>
+</div>
+
+<script>
+    // ---------- Constants (from the Excel capacity conversion tool) ----------
+    const CONVERSION_FACTOR = 931 / 1024; // Decimal -> Binary TB
+    const SYSTEM_OVERHEAD = 0.9;
+
+    const FILE_STRATEGIES = [
+        { name: "EC 4+2", d: 4, p: 2, minNodes: 3, oddAllowedAtNodes: 6 },
+        { name: "EC 8+2", d: 8, p: 2, minNodes: 5, oddAllowedAtNodes: 10 }
+    ];
+    const BLOCK_STRATEGIES = [
+        { name: "2-Copy (Double Replica)", d: 1, p: 1, minNodes: 3, oddAllowedAtNodes: null },
+        { name: "3-Copy (Triple Replica)", d: 1, p: 2, minNodes: 3, oddAllowedAtNodes: null }
+    ];
+
+    const FILE_DISK_SIZES = [4, 6, 8, 10, 12, 16, 20];
+    const BLOCK_DISK_SIZES = [4, 6, 8, 10, 12, 16];
+
+    const CACHE_DISK_OPTIONS_FILE = [
+        { val: 0.96, eff: 0.94, label: "960GB NVMe/SATA SSD" },
+        { val: 1.6, eff: 1.6, label: "1.6TB NVMe SSD" },
+        { val: 1.92, eff: 1.92, label: "1.92TB NVMe/SATA SSD" },
+        { val: 3.2, eff: 3.2, label: "3.2TB NVMe SSD" },
+        { val: 3.84, eff: 3.84, label: "3.84TB NVMe/SATA SSD" },
+        { val: 7.68, eff: 7.68, label: "7.68TB NVMe/SATA SSD" }
+    ];
+    const CACHE_DISK_OPTIONS_BLOCK = [
+        { val: 0.48, label: "480GB SATA SSD" },
+        { val: 0.96, label: "960GB NVMe/SATA SSD" },
+        { val: 1.6, label: "1.6TB NVMe SSD" },
+        { val: 1.92, label: "1.92TB NVMe/SATA SSD" },
+        { val: 3.2, label: "3.2TB NVMe SSD" },
+        { val: 3.84, label: "3.84TB NVMe/SATA SSD" },
+        { val: 7.68, label: "7.68TB NVMe/SATA SSD" }
+    ];
+
+    // Storage scenario -> phxKV (metadata) proportion of cache SSD capacity (from Excel SSD evaluation tool)
+    const SCENARIO_RATIO = [
+        { key: "general", label: "General Purpose", m: 0.3 },
+        { key: "office", label: "Office Collaboration / File Sharing", m: 0.3 },
+        { key: "pacs", label: "Medical PACS", m: 0.4 },
+        { key: "survey", label: "Surveying & Oblique Photography", m: 0.4 },
+        { key: "mfgqc", label: "Manufacturing Line Quality Inspection", m: 0.7 },
+        { key: "anim", label: "Animation Production", m: 0.4 },
+        { key: "eda", label: "Code Compilation & EDA Simulation", m: 0.4 },
+        { key: "ai", label: "AI Training", m: 0.4 },
+        { key: "vmbackup", label: "VM & Database Backup", m: 0.2 },
+        { key: "media", label: "Broadcast Non-Linear Editing & Media Assets", m: 0.2 },
+        { key: "gene", label: "Gene Sequencing", m: 0.2 },
+        { key: "satellite", label: "Satellite Remote Sensing", m: 0.2 },
+        { key: "smallfile", label: "File Profile — Small Files", m: 0.4 },
+        { key: "largefile", label: "File Profile — Large Files", m: 0.2 }
+    ];
+
+    // Allowed DIMM (32GB each) population steps per server model
+    const DIMM_STEPS = {
+        "1150W": [2,4,6,8,12,16], "1210W": [2,4,6,8,12,16],
+        "1150X5": [2,4,8], "1210X5": [2,4,8],
+        "1250W": [2,4,8,12,16,24,32], "1250X5": [2,4,8,12,16,24,32],
+        "3650W": [2,4,8,12,16,24,32], "3650X5": [2,4,8,12,16,24,32]
+    };
+
+
+    // Server model -> memory table group + slot description + DIMM step note
+    const MODEL_INFO = {
+        "1150W":   { group: "A", slots: "7 front SATA + 4 front SATA/U.2 (max 11 disks)", dimm: "Supports 2 / 4 / 6 / 8 / 12 / 16 DIMMs per node." },
+        "1150X5":  { group: "A", slots: "8 front SATA + 4 front SATA/U.2 (max 12 disks)", dimm: "Supports 2 / 4 / 8 DIMMs per node." },
+        "1210W":   { group: "A", slots: "10 front SATA + 2 front SATA/U.2 (max 12 disks)", dimm: "Supports 2 / 4 / 6 / 8 / 12 / 16 DIMMs per node." },
+        "1210X5":  { group: "A", slots: "10 front SATA + 2 front SATA/U.2 (max 12 disks)", dimm: "Supports 2 / 4 / 8 DIMMs per node." },
+        "1250W":   { group: "B", slots: "12 SATA + 2 rear U.2 (max 14 disks)", dimm: "Supports 2 / 4 / 8 / 12 / 16 / 24 / 32 DIMMs per node." },
+        "1250X5":  { group: "B", slots: "12 SATA + 2 rear U.2 (max 14 disks)", dimm: "Supports 2 / 4 / 8 / 12 / 16 / 24 / 32 DIMMs per node." },
+        "3650W":   { group: "D", slots: "36 SATA + 4 rear U.2 (max 40 disks)", dimm: "Supports 2 / 4 / 8 / 12 / 16 / 24 / 32 DIMMs per node. 4U chassis, base memory ≥128GB.", extraNic: true },
+        "3650X5":  { group: "D", slots: "36 SATA + 4 rear U.2 (max 40 disks)", dimm: "Supports 2 / 4 / 8 / 12 / 16 / 24 / 32 DIMMs per node. 4U chassis, base memory ≥128GB." }
+    };
+
+    // Memory lookup table (from the Excel memory configuration requirements table)
+    // vals index: [0]=Indep-Basic [1]=Indep-Metadata [2]=Indep-HDFS [3]=Indep-HDFS+Meta
+    //             [4]=Conv-Basic  [5]=Conv-Metadata  [6]=Conv-HDFS  [7]=Conv-HDFS+Meta   (GB, null = not supported)
+    const MEM_TABLE = {
+        A: [
+            { cache: [1, 2], cifs: [0, 500],    vals: [64, 128, 128, 192, 128, 128, 192, 256] },
+            { cache: [1, 2], cifs: [500, 1000], vals: [128, 192, 128, 192, 192, 192, 192, 256] },
+            { cache: [3, 4], cifs: [0, 1000],   vals: [128, 192, 128, 192, 192, 192, 192, 256] },
+            { cache: [1, 4], cifs: [1000, 2000],vals: [256, 384, 256, 384, 384, 384, 384, 384] }
+        ],
+        B: [
+            { cache: [1, 2], cifs: [0, 500],    vals: [64, 128, 128, 192, 128, 128, 256, 256] },
+            { cache: [1, 2], cifs: [500, 1000], vals: [128, 256, 128, 256, 256, 256, 256, 256] },
+            { cache: [3, 4], cifs: [0, 1000],   vals: [128, 256, 128, 256, 256, 256, 256, 256] },
+            { cache: [1, 4], cifs: [1000, 2000],vals: [256, 384, 256, 384, 384, 384, 384, 384] }
+        ],
+        D: [
+            { cache: [1, 4], cifs: [0, 1000],   vals: [128, 256, 128, 256, 256, 256, 256, 256] },
+            { cache: [1, 4], cifs: [1000, 2000],vals: [256, 384, 256, 384, 384, 384, 384, 384] }
+        ]
+    };
+
+    let selectedStrategy = null;
+    let lastRaw = 0;
+    let lastUsable = 0;
+
+    window.onload = function () {
+        onStorageTypeChange();
+        const model = document.getElementById('serverModel').value;
+        const info = MODEL_INFO[model];
+        document.getElementById("modelSlotNote").innerText = "Disk bays: " + info.slots;
+        document.getElementById('modelDimmNote').innerText = info.dimm;
+        recalcNetwork();
+    };
+
+    function onStorageTypeChange() {
+        const type = document.getElementById('storageType').value;
+        const nodeInput = document.getElementById('nodeCount');
+        nodeInput.max = type === 'block' ? 12 : 24;
+        if (parseInt(nodeInput.value) > parseInt(nodeInput.max)) nodeInput.value = nodeInput.max;
+        document.getElementById('nodeCountNote').innerText = type === 'block'
+            ? "Block storage pool max = 12 nodes/cluster. Minimum node count also depends on the redundancy strategy selected below."
+            : "File/Object storage pool max = 24 nodes/cluster. Minimum node count also depends on the redundancy strategy selected below.";
+        document.getElementById('ssdEvalCard').style.display = type === 'file' ? 'block' : 'none';
+        const dataSizeSel = document.getElementById('dataDiskSize');
+        const cacheSizeSel = document.getElementById('cacheDiskSize');
+        const strategyTitle = document.getElementById('strategyTableTitle');
+
+        dataSizeSel.innerHTML = "";
+        (type === 'file' ? FILE_DISK_SIZES : BLOCK_DISK_SIZES).forEach(sz => {
+            let opt = document.createElement('option');
+            opt.value = sz; opt.innerText = sz + " TB HDD";
+            dataSizeSel.appendChild(opt);
+        });
+        dataSizeSel.value = type === 'file' ? 6 : 6;
+
+        cacheSizeSel.innerHTML = "";
+        (type === 'file' ? CACHE_DISK_OPTIONS_FILE : CACHE_DISK_OPTIONS_BLOCK).forEach(d => {
+            let opt = document.createElement('option');
+            opt.value = d.val; opt.innerText = d.label;
+            opt.setAttribute('data-eff', d.eff !== undefined ? d.eff : d.val);
+            cacheSizeSel.appendChild(opt);
+        });
+        cacheSizeSel.value = 1.92;
+
+        // Populate SSD/phxKV scenario dropdown (File/Object only, but harmless if populated always)
+        const scenarioSel = document.getElementById('ssdScenario');
+        if (scenarioSel) {
+            scenarioSel.innerHTML = "";
+            SCENARIO_RATIO.forEach(s => {
+                let opt = document.createElement('option');
+                opt.value = s.key; opt.innerText = s.label;
+                scenarioSel.appendChild(opt);
+            });
+        }
+
+        document.getElementById('featureFlag').innerHTML = type === 'file'
+            ? `<option value="basic">Basic (no additional feature)</option>
+               <option value="metadata">Metadata Index (Object Storage search)</option>
+               <option value="hdfs">HDFS</option>
+               <option value="hdfsmeta">HDFS + Metadata Index</option>`
+            : `<option value="basic">Basic (no additional feature)</option>`;
+
+        strategyTitle.innerText = type === 'file'
+            ? "Redundancy Strategy Options — Erasure Coding (Select One)"
+            : "Redundancy Strategy Options — Replica Protection (Select One)";
+
+        document.getElementById('blockRatioNote').innerHTML = type === 'block'
+            ? `<div class="note">Block storage disk ratio rule: SSD:HDD capacity ratio ≥ 5%, and SSD:HDD quantity ratio ≥ 1:7 (deliveries below 1:7 are not supported).</div>
+               <div class="note" style="margin-top:6px;">Cache disk count guidance by performance tier: <strong>Standard</strong> (1-3 DBs, 100-400 concurrent users) → ≥2 SSD/node; <strong>High</strong> (>400 concurrent DB users) → ≥3 SSD/node; <strong>Extreme</strong> (DB-heavy) → skip cache, use all-SSD data disks (all-flash block, outside this tool's scope).</div>`
+            : `<div class="note">File/Object storage: no fixed capacity or quantity ratio required between cache and data disks.</div>`;
+
+        recalcAll();
+    }
+
+    function recalcAll() {
+        buildStrategyTable();
+    }
+
+    function buildStrategyTable() {
+        const type = document.getElementById('storageType').value;
+        const mode = document.getElementById('calcMode').value;
+        const inputVal = parseFloat(document.getElementById('inputCapacity').value) || 0;
+        const diskSize = parseFloat(document.getElementById('dataDiskSize').value) || 1;
+        const nodeCount = parseInt(document.getElementById('nodeCount').value) || 0;
+        const tbody = document.getElementById('capacityBody');
+
+        tbody.innerHTML = "";
+        const strategies = type === 'file' ? FILE_STRATEGIES : BLOCK_STRATEGIES;
+        let defaultIndex = 0;
+
+        strategies.forEach((strat, index) => {
+            const ratio = strat.d / (strat.d + strat.p);
+            let raw, usable;
+            if (mode === 'usableToRaw') {
+                usable = inputVal;
+                raw = usable / (SYSTEM_OVERHEAD * ratio * CONVERSION_FACTOR);
+            } else {
+                raw = inputVal;
+                usable = raw * CONVERSION_FACTOR * ratio * SYSTEM_OVERHEAD;
+            }
+            const disksNeeded = Math.ceil(raw / diskSize);
+
+            let note = "Recommended", noteClass = "tag-rec";
+            if (nodeCount < strat.minNodes) {
+                note = "Node count too low"; noteClass = "tag-err";
+            } else if (Math.floor(disksNeeded / Math.max(nodeCount,1)) < 1) {
+                note = "Low disk density"; noteClass = "tag-warn";
+            }
+
+            const tr = document.createElement('tr');
+            tr.onclick = () => selectStrategy(tr, strat, raw, usable, disksNeeded);
+            tr.innerHTML = `
+                <td><input type="radio" name="stratSelect" ${index === defaultIndex ? "checked" : ""}></td>
+                <td><strong>${strat.name}</strong></td>
+                <td>${(ratio * 100).toFixed(0)}%</td>
+                <td>${raw.toFixed(2)}</td>
+                <td>${usable.toFixed(2)}</td>
+                <td>${disksNeeded}</td>
+                <td>${strat.minNodes}</td>
+                <td><span class="tag ${noteClass}">${note}</span></td>
+            `;
+            tbody.appendChild(tr);
+            if (index === defaultIndex) selectStrategy(tr, strat, raw, usable, disksNeeded);
+        });
+    }
+
+    function selectStrategy(row, strat, raw, usable, disksNeeded) {
+        document.querySelectorAll('#capacityBody tr').forEach(r => r.classList.remove('selected-row'));
+        row.classList.add('selected-row');
+        row.querySelector('input').checked = true;
+
+        selectedStrategy = strat;
+        lastRaw = raw;
+        lastUsable = usable;
+
+        renderStrategyWarning(strat);
+        recalcDisks(disksNeeded, raw, usable, strat);
+    }
+
+    function renderStrategyWarning(strat) {
+        const nodeCount = parseInt(document.getElementById('nodeCount').value) || 0;
+        const box = document.getElementById('strategyWarning');
+        if (nodeCount < strat.minNodes) {
+            box.innerHTML = `<div class="alert alert-err"><strong>Cluster size too small:</strong> ${strat.name} requires a minimum of ${strat.minNodes} nodes; current cluster has ${nodeCount}.</div>`;
+        } else {
+            box.innerHTML = "";
+        }
+    }
+
+    function recalcDisks(disksNeeded, raw, usable, strat) {
+        const type = document.getElementById('storageType').value;
+        const nodeCount = parseInt(document.getElementById('nodeCount').value) || 1;
+        let perNode = Math.ceil(disksNeeded / nodeCount);
+        let noteHtml = "";
+
+        if (type === 'file') {
+            if (perNode < 4) { perNode = 4; noteHtml += `<div class="note">Per-node data disk count raised to the 4-disk minimum required by EDS.</div>`; }
+            const oddAllowed = strat.oddAllowedAtNodes && nodeCount >= strat.oddAllowedAtNodes;
+            if (!oddAllowed && perNode % 2 !== 0) {
+                perNode += 1;
+                noteHtml += `<div class="note">Rounded up to an even disk count per node (odd counts are only permitted at ${strat.oddAllowedAtNodes}+ nodes with ${strat.name}).</div>`;
+            }
+        } else {
+            if (perNode < 1) perNode = 1;
+            if (perNode < 4) noteHtml += `<div class="note">Sangfor recommends 4+ data disks per node for block storage (minimum is 1).</div>`;
+        }
+
+        const adjTotal = perNode * nodeCount;
+
+        document.getElementById('outTotalDataDisks').innerText = disksNeeded;
+        document.getElementById('outDataDisksPerNode').innerText = perNode;
+        document.getElementById('outAdjTotalDataDisks').innerText = adjTotal;
+        document.getElementById('dataDiskNote').innerHTML = noteHtml;
+
+        recalcCacheAndMemory(adjTotal, raw, usable, perNode);
+    }
+
+    function recalcCacheAndMemory(adjTotalDataDisks, raw, usable, dataDisksPerNode) {
+        const type = document.getElementById('storageType').value;
+        const nodeCount = parseInt(document.getElementById('nodeCount').value) || 1;
+        const cacheCount = Math.min(4, Math.max(1, parseInt(document.getElementById('cacheDiskCount').value) || 1));
+        const cacheSize = parseFloat(document.getElementById('cacheDiskSize').value) || 0;
+        const dataDiskSize = parseFloat(document.getElementById('dataDiskSize').value) || 1;
+
+        let ratioNote = "";
+        if (type === 'block') {
+            const totalCacheDisks = cacheCount * nodeCount;
+            const qtyRatio = totalCacheDisks / adjTotalDataDisks;
+            const capRatio = (totalCacheDisks * cacheSize) / (adjTotalDataDisks * dataDiskSize);
+            const qtyOk = qtyRatio >= (1 / 7) - 1e-9;
+            const capOk = capRatio >= 0.05 - 1e-9;
+            ratioNote = `<div class="alert ${(qtyOk && capOk) ? '' : 'alert-warn'}" style="margin-top:8px;">
+                SSD:HDD quantity ratio = 1:${(adjTotalDataDisks / totalCacheDisks).toFixed(1)} (requires ≥ 1:7) ${qtyOk ? '✓' : '⚠ below minimum — add cache disks'}<br>
+                SSD:HDD capacity ratio = ${(capRatio * 100).toFixed(1)}% (requires ≥ 5%) ${capOk ? '✓' : '⚠ below minimum — add cache capacity'}
+            </div>`;
+        }
+        if (type === 'block') {
+            document.getElementById('blockRatioNote').innerHTML =
+                `<div class="note">Block storage disk ratio rule: SSD:HDD capacity ratio ≥ 5%, and SSD:HDD quantity ratio ≥ 1:7.</div>
+                 <div class="note" style="margin-top:6px;">Cache disk count guidance by performance tier: <strong>Standard</strong> (1-3 DBs, 100-400 concurrent users) → ≥2 SSD/node; <strong>High</strong> (>400 concurrent DB users) → ≥3 SSD/node; <strong>Extreme</strong> (DB-heavy) → skip cache, use all-SSD data disks (all-flash block, outside this tool's scope).</div>`
+                + ratioNote;
+        } else {
+            document.getElementById('blockRatioNote').innerHTML =
+                `<div class="note">File/Object storage: no fixed capacity or quantity ratio required between cache and data disks.</div>`;
+            computeSsdEvaluation(dataDisksPerNode, dataDiskSize, cacheCount);
+        }
+
+        recalcMemory(cacheCount);
+        renderSummary(adjTotalDataDisks, cacheCount, raw, usable);
+    }
+
+    function computeSsdEvaluation(dataDisksPerNode, dataDiskSize, cacheCount) {
+        const cacheSizeSel = document.getElementById('cacheDiskSize');
+        const selectedOpt = cacheSizeSel.options[cacheSizeSel.selectedIndex];
+        const cacheSizeEff = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-eff')) : parseFloat(cacheSizeSel.value);
+
+        const subType = document.getElementById('ssdSubType').value;
+        const avgFileSizeKB = parseFloat(document.getElementById('avgFileSize').value) || 1;
+        const scenarioKey = document.getElementById('ssdScenario').value;
+        const scenario = SCENARIO_RATIO.find(s => s.key === scenarioKey) || SCENARIO_RATIO[0];
+        const M = scenario.m;
+        const compressOn = document.getElementById('compressToggle').checked;
+        const J = (parseFloat(document.getElementById('compressRatio').value) || 90) / 100;
+        const L = selectedStrategy ? (selectedStrategy.d + selectedStrategy.p) / selectedStrategy.d : 1.5;
+
+        const C = dataDisksPerNode;
+        const D = dataDiskSize;
+        const E = avgFileSizeKB;
+        const G = cacheCount;
+        const H = cacheSizeEff;
+
+        // phxKV (metadata) capacity reserved on the cache SSDs, in TB
+        const N = G * H * M;
+
+        // Per-file metadata overhead in bytes, based on 4MB extent chunking and 16KB block units
+        const extents = Math.ceil((E * 1024) / 4194304);
+        const blocks = Math.ceil((E * 1024) / 16384);
+
+        let denom;
+        if (subType === 'obj') {
+            denom = 135 + 84 * extents + 65 + 2 * (blocks - 1);
+        } else {
+            const perBlockCost = compressOn ? 6 : 2;
+            denom = 135 + 141 * extents + perBlockCost * (blocks - 1);
+        }
+        // Max file count supported by SSD/metadata capacity, in units of 10,000
+        const R = ((N * Math.pow(1024, 4) - 5 * Math.pow(1024, 3) * G) / 2 / 3.3) / denom / 10000;
+
+        // Max file count supported by HDD/data-disk capacity, in units of 10,000
+        const P = (C * D * Math.pow(1024, 3) / L / E / (compressOn ? J : 1)) / 10000;
+
+        const S = Math.min(R, P);
+        const T = (S * 10000 * E * L / (C * D * Math.pow(1024, 3)) * (compressOn ? J : 1)) * 100;
+
+        document.getElementById('outPhxkvCap').innerText = N.toFixed(2) + " TB";
+        document.getElementById('outMaxFileSsd').innerText = fmtFileCount(R);
+        document.getElementById('outMaxFileHdd').innerText = fmtFileCount(P);
+        document.getElementById('outMaxFileScale').innerText = fmtFileCount(S);
+        document.getElementById('outDiskUtil').innerText = T.toFixed(1) + "%";
+
+        const warnBox = document.getElementById('ssdEvalWarning');
+        if (T < 98) {
+            warnBox.innerHTML = `<div class="alert alert-warn"><strong>Data disk space is under-utilized (${T.toFixed(1)}% &lt; 98%).</strong> The cache SSD's metadata (phxKV) capacity is the limiting factor — increase cache disk count or capacity to raise the SSD-bound file ceiling, or you will be paying for HDD capacity you can never actually fill with this many small files.</div>`;
+        } else {
+            let tier = "";
+            if (S > 100000) tier = "over 1 billion files";
+            else if (S > 10000) tier = "over 100 million files";
+            else if (S > 5000) tier = "over 50 million files";
+            else if (S > 1000) tier = "over 10 million files";
+            else if (S > 100) tier = "over 1 million files";
+            else if (S > 10) tier = "over 100,000 files";
+            else if (S > 1) tier = "over 10,000 files";
+            else tier = "under 10,000 files";
+            warnBox.innerHTML = `<div class="alert">Data disk capacity utilization is healthy (${T.toFixed(1)}% ≥ 98%). This configuration supports roughly <strong>${tier} per node</strong> (~${fmtFileCount(S)} across the node, ×${document.getElementById('nodeCount').value} nodes cluster-wide).</div>`;
+        }
+    }
+
+    function fmtFileCount(wanValue) {
+        // wanValue is in units of 10,000; convert to a readable absolute count
+        const abs = wanValue * 10000;
+        if (abs >= 1e9) return (abs / 1e9).toFixed(2) + "B (" + Math.round(abs).toLocaleString() + " files)";
+        if (abs >= 1e6) return (abs / 1e6).toFixed(2) + "M (" + Math.round(abs).toLocaleString() + " files)";
+        if (abs >= 1e3) return (abs / 1e3).toFixed(1) + "K (" + Math.round(abs).toLocaleString() + " files)";
+        return Math.round(abs).toLocaleString() + " files";
+    }
+
+    function recalcMemory(cacheCountArg) {
+        const model = document.getElementById('serverModel').value;
+        const info = MODEL_INFO[model];
+        const deployMode = document.getElementById('deployMode').value;
+        const feature = document.getElementById('featureFlag').value;
+        const smbTotal = parseInt(document.getElementById('smbClients').value) || 0;
+        const nodeCount = parseInt(document.getElementById('nodeCount').value) || 1;
+        const cacheCount = cacheCountArg || Math.min(4, Math.max(1, parseInt(document.getElementById('cacheDiskCount').value) || 1));
+        const smbPerNode = Math.ceil(smbTotal / nodeCount);
+
+        document.getElementById('smbPerNodeNote').innerText = `Per-node client count = ${smbTotal} ÷ ${nodeCount} = ${smbPerNode} clients/node.`;
+        document.getElementById('featureNote').innerText = "";
+
+        const colIndex = (deployMode === 'converged' ? 4 : 0) + { basic: 0, metadata: 1, hdfs: 2, hdfsmeta: 3 }[feature];
+        const rows = MEM_TABLE[info.group].filter(r =>
+            cacheCount >= r.cache[0] && cacheCount <= r.cache[1] &&
+            smbPerNode >= r.cifs[0] && smbPerNode <= r.cifs[1]
+        );
+
+        let memWarn = "";
+        let reqGb = null;
+        if (rows.length === 0) {
+            // out of table coverage (e.g. > 2000 clients/node) — use the highest tier as a floor and warn
+            const fallbackRows = MEM_TABLE[info.group];
+            reqGb = Math.max(...fallbackRows.map(r => r.vals[colIndex]).filter(v => v !== null));
+            memWarn = `<div class="alert alert-warn">Per-node client count (${smbPerNode}) or cache disk count (${cacheCount}) is outside the tool's tabulated range (max 2000 clients/node). Showing the highest tabulated tier as a floor — please verify with Sangfor SE.</div>`;
+        } else {
+            const vals = rows.map(r => r.vals[colIndex]);
+            reqGb = Math.max(...vals);
+        }
+
+        // --- Round up to a deliverable DIMM configuration (32GB DIMMs, valid step counts per model) ---
+        const steps = DIMM_STEPS[model] || [2,4,8,16,32];
+        const reqDimms = reqGb / 32;
+        let actualDimms = steps.find(s => s >= reqDimms);
+        if (actualDimms === undefined) actualDimms = steps[steps.length - 1];
+        const actualGb = actualDimms * 32;
+
+        document.getElementById('outMemPerNode').innerText = reqGb + " GB";
+        document.getElementById('outMemActual').innerText = actualGb + " GB (" + actualDimms + " x 32GB DIMM)";
+        document.getElementById('outMemTotal').innerText = (actualGb * nodeCount) + " GB";
+        document.getElementById('memWarning').innerHTML = memWarn;
+        document.getElementById('sumMem').innerText = actualGb + " GB/node (" + actualDimms + " x 32GB)";
+
+        // --- Soft / recommended (non-mandatory) memory guidance ---
+        const type = document.getElementById('storageType').value;
+        let recGb = reqGb;
+        let recReasons = [];
+        if (document.getElementById('hpcToggle').checked && recGb < 256) { recGb = 256; recReasons.push("high-performance workload (EDA/AI training/genomics)"); }
+        if (type === 'file') {
+            if (cacheCount <= 2 && recGb < 128) { recGb = 128; recReasons.push("file storage pool with ≤2 cache disks/node"); }
+            if (cacheCount >= 3 && recGb < 256) { recGb = 256; recReasons.push("file storage pool with ≥3 cache disks/node"); }
+        }
+        if ((feature === 'hdfs' || feature === 'hdfsmeta') && recGb < 256) { recGb = 256; recReasons.push("HDFS enabled"); }
+
+        const recBox = document.getElementById('memRecommendation');
+        if (recGb > actualGb && recBox) {
+            let recDimms = steps.find(s => s >= recGb / 32);
+            if (recDimms === undefined) recDimms = steps[steps.length - 1];
+            const recActualGb = recDimms * 32;
+            recBox.innerHTML = `<div class="alert">Sangfor best-practice recommendation (not mandatory): ≥${recGb}GB/node — deliverable as ${recActualGb}GB (${recDimms} x 32GB DIMM) — due to: ${recReasons.join(", ")}.</div>`;
+        } else if (recBox) {
+            recBox.innerHTML = "";
+        }
+
+        window.__lastMemPerNode = actualGb + " GB";
+    }
+
+    function onModelChange() {
+        const model = document.getElementById('serverModel').value;
+        const info = MODEL_INFO[model];
+        document.getElementById("modelSlotNote").innerText = "Disk bays: " + info.slots;
+        document.getElementById('modelDimmNote').innerText = info.dimm;
+        recalcMemory();
+        recalcNetwork();
+        // refresh full chain to update summary
+        buildStrategyTable();
+    }
+
+    function recalcNetwork() {
+        const nodeCount = parseInt(document.getElementById('nodeCount').value) || 0;
+        const scenario = document.getElementById('netScenario').value;
+        const model = document.getElementById('serverModel').value;
+        const info = MODEL_INFO[model];
+
+        let switches = 2, lcCables = 0, mpo = 0, nic = "", modules = "", scenarioLabel = "";
+
+        if (scenario === 's1') {
+            scenarioLabel = "10GE switch pair (business + storage private, shared)";
+            lcCables = nodeCount * 4 + 2;
+            const mods10g = nodeCount * 8 + 4;
+            modules = `${mods10g} x 10G optical modules`;
+            nic = "2x dual-port 10GbE NIC/node (standard)" + (info.extraNic ? " + 1x additional dual-port 10GbE NIC/node (required for this model)" : "");
+            document.getElementById('netFormulaNote').innerHTML =
+                `<strong>Scenario 1 formulas:</strong><br>LC-LC cables = Nodes×4+2<br>10G modules = Nodes×8+4<br>Switches = 2x 10GE (shared business+storage)<br>NIC: standard 2x dual-port 10GbE/node; 3650W/3650-X5 need +1 additional dual-port 10GbE NIC/node.`;
+        } else if (scenario === 's2') {
+            scenarioLabel = "25GE switch pair (business + storage private, shared)";
+            lcCables = nodeCount * 4;
+            mpo = 2;
+            const mods10g = nodeCount * 4;
+            const mods25g = nodeCount * 4;
+            modules = `${mods10g} x 10G modules + ${mods25g} x 25G modules + 4 x 100G modules (switch interconnect)`;
+            nic = `${nodeCount} x 25G NIC (1 per node)`;
+            document.getElementById('netFormulaNote').innerHTML =
+                `<strong>Scenario 2 formulas:</strong><br>LC-LC cables = Nodes×4<br>MPO cables = 2 (switch interconnect)<br>10G modules = Nodes×4, 25G modules = Nodes×4, 100G modules = 4<br>25G NIC = Nodes×1<br>Recommend Huawei 25GE switches / MPO cabling / 100G modules if RoCEv2 support cannot be confirmed on customer switches.`;
+        } else {
+            scenarioLabel = "25GE switch pair (business + storage private, shared)";
+            lcCables = nodeCount * 4;
+            mpo = 2;
+            const mods25g = nodeCount * 8;
+            modules = `${mods25g} x 25G modules + 4 x 100G modules (switch interconnect)`;
+            nic = `${nodeCount * 2} x 25G NIC (2 per node)`;
+            document.getElementById('netFormulaNote').innerHTML =
+                `<strong>Scenario 3 formulas:</strong><br>LC-LC cables = Nodes×4<br>MPO cables = 2 (switch interconnect)<br>25G modules = Nodes×8, 100G modules = 4<br>25G NIC = Nodes×2<br>Recommend Huawei 25GE switches / MPO cabling / 100G modules if RoCEv2 support cannot be confirmed on customer switches.`;
+        }
+
+        document.getElementById('sumNetScenario').innerText = scenarioLabel.includes('10GE') ? 'Scenario 1 (10G/10G)' : (scenario === 's2' ? 'Scenario 2 (10G/25G)' : 'Scenario 3 (25G/25G)');
+        document.getElementById('sumSwitches').innerText = `2 x ${scenario === 's1' ? '10GE' : '25GE'} switches`;
+        document.getElementById('sumNic').innerText = nic;
+        document.getElementById('sumModules').innerText = modules;
+        document.getElementById('sumLcCables').innerText = lcCables;
+
+        const rowMpo = document.getElementById('rowSumMpo');
+        if (mpo > 0) { rowMpo.style.display = 'flex'; document.getElementById('sumMpo').innerText = mpo; }
+        else { rowMpo.style.display = 'none'; }
+    }
+
+    function renderSummary(adjTotalDataDisks, cacheCount, raw, usable) {
+        const model = document.getElementById('serverModel').value;
+        const nodeCount = parseInt(document.getElementById('nodeCount').value) || 0;
+        const strategyName = selectedStrategy ? selectedStrategy.name : "-";
+        const totalCacheDisks = cacheCount * nodeCount;
+
+        document.getElementById('sumModel').innerText = model;
+        document.getElementById('sumNodes').innerText = nodeCount;
+        document.getElementById('sumStrategy').innerText = strategyName;
+        document.getElementById('sumDataDisks').innerText = `${adjTotalDataDisks} x ${document.getElementById('dataDiskSize').value}TB HDD`;
+        document.getElementById('sumCacheDisks').innerText = `${totalCacheDisks} x ${document.getElementById('cacheDiskSize').value}TB SSD`;
+        document.getElementById('sumUsable').innerText = usable.toFixed(2) + " TB";
+
+        recalcNetwork();
+    }
+
+    // wire up remaining live listeners
+    document.getElementById('cacheDiskCount').addEventListener('input', () => buildStrategyTable());
+    document.getElementById('cacheDiskSize').addEventListener('change', () => buildStrategyTable());
+    document.getElementById('deployMode').addEventListener('change', () => buildStrategyTable());
+    document.getElementById('featureFlag').addEventListener('change', () => buildStrategyTable());
+    document.getElementById('smbClients').addEventListener('input', () => buildStrategyTable());
+    document.getElementById('hpcToggle').addEventListener('change', () => buildStrategyTable());
+    document.getElementById('netScenario').addEventListener('change', () => recalcNetwork());
+    document.getElementById('ssdSubType').addEventListener('change', () => buildStrategyTable());
+    document.getElementById('avgFileSize').addEventListener('input', () => buildStrategyTable());
+    document.getElementById('ssdScenario').addEventListener('change', () => buildStrategyTable());
+    document.getElementById('compressToggle').addEventListener('change', () => buildStrategyTable());
+    document.getElementById('compressRatio').addEventListener('input', () => buildStrategyTable());
+</script>
+
+</body>
+</html>
