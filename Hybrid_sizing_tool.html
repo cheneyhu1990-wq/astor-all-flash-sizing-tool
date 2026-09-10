@@ -144,6 +144,9 @@
         .alert-err { background-color: #fdecea; border-left-color: var(--danger); }
 
         .badge-group { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+
+        .value-err { color: #ff8a8a !important; }
+        .output-row span.value-err { color: #ff8a8a !important; }
     </style>
 </head>
 <body>
@@ -370,6 +373,20 @@
                 <div class="alert" id="netFormulaNote" style="margin-top:24px;"></div>
             </div>
         </div>
+        <div class="grid-2" style="margin-top:15px;">
+            <div>
+                <label for="pcieAvailable">Available PCI-e Expansion Slots / Node (for add-on NICs)</label>
+                <input type="number" id="pcieAvailable" value="2" min="0" oninput="recalcNetwork()">
+                <div class="note" id="pcieAvailableNote"></div>
+            </div>
+            <div>
+                <div class="output-box" style="background-color:#34495e; padding:12px 20px;">
+                    <div class="output-row"><span>Add-on NIC cards needed / node</span><span class="output-val" id="pcieNeeded">-</span></div>
+                    <div class="output-row"><span>Available PCI-e slots / node</span><span class="output-val" id="pcieAvail">-</span></div>
+                </div>
+                <div id="pcieWarning" style="margin-top:8px;"></div>
+            </div>
+        </div>
     </div>
 
     <div class="card">
@@ -428,8 +445,8 @@
         { name: "3-Copy (Triple Replica)", d: 1, p: 2, minNodes: 3, oddAllowedAtNodes: null }
     ];
 
-    const FILE_DISK_SIZES = [4, 6, 8, 10, 12, 16, 20];
-    const BLOCK_DISK_SIZES = [4, 6, 8, 10, 12, 16];
+    const FILE_DISK_SIZES = [4, 6, 8, 10, 12, 16, 20, 24];
+    const BLOCK_DISK_SIZES = [4, 6, 8, 10, 12, 16, 24];
 
     const CACHE_DISK_OPTIONS_FILE = [
         { val: 0.96, eff: 0.94, label: "960GB NVMe/SATA SSD" },
@@ -476,17 +493,37 @@
     };
 
 
-    // Server model -> memory table group + slot description + DIMM step note
+    // Server model -> memory table group + physical bay breakdown + DIMM step note
+    // frontBays        = front bays that are SATA-only (accept SATA HDD data disks or SATA SSD cache disks)
+    // comboBays        = front bays that are SATA/U.2 combo (accept SATA HDD/SSD OR NVMe SSD) — usable for data disks too
+    // rearU2Bays       = rear bays that are U.2 NVMe-ONLY — cannot hold a SATA HDD data disk, cache (NVMe SSD) only
+    // pcieAddonSlots   = free/available PCI-e expansion slots per node for add-on NICs (beyond the standard onboard/default NIC).
+    //                    NOT published in the EDS Selection Guide or capacity/memory Excel tools — these are PLACEHOLDER
+    //                    values only. Confirm the real figure from the official Sangfor hardware BOM/quotation sheet for
+    //                    each model before relying on the PCI-e check below.
     const MODEL_INFO = {
-        "1150W":   { group: "A", slots: "7 front SATA + 4 front SATA/U.2 (max 11 disks)", dimm: "Supports 2 / 4 / 6 / 8 / 12 / 16 DIMMs per node." },
-        "1150X5":  { group: "A", slots: "8 front SATA + 4 front SATA/U.2 (max 12 disks)", dimm: "Supports 2 / 4 / 8 DIMMs per node." },
-        "1210W":   { group: "A", slots: "10 front SATA + 2 front SATA/U.2 (max 12 disks)", dimm: "Supports 2 / 4 / 6 / 8 / 12 / 16 DIMMs per node." },
-        "1210X5":  { group: "A", slots: "10 front SATA + 2 front SATA/U.2 (max 12 disks)", dimm: "Supports 2 / 4 / 8 DIMMs per node." },
-        "1250W":   { group: "B", slots: "12 SATA + 2 rear U.2 (max 14 disks)", dimm: "Supports 2 / 4 / 8 / 12 / 16 / 24 / 32 DIMMs per node." },
-        "1250X5":  { group: "B", slots: "12 SATA + 2 rear U.2 (max 14 disks)", dimm: "Supports 2 / 4 / 8 / 12 / 16 / 24 / 32 DIMMs per node." },
-        "3650W":   { group: "D", slots: "36 SATA + 4 rear U.2 (max 40 disks)", dimm: "Supports 2 / 4 / 8 / 12 / 16 / 24 / 32 DIMMs per node. 4U chassis, base memory ≥128GB.", extraNic: true },
-        "3650X5":  { group: "D", slots: "36 SATA + 4 rear U.2 (max 40 disks)", dimm: "Supports 2 / 4 / 8 / 12 / 16 / 24 / 32 DIMMs per node. 4U chassis, base memory ≥128GB." }
+        "1150W":   { group: "A", frontBays: 7,  comboBays: 4, rearU2Bays: 0, slots: "7 front SATA + 4 front SATA/U.2 (max 11 disks)", dimm: "Supports 2 / 4 / 6 / 8 / 12 / 16 DIMMs per node.", pcieAddonSlots: 2 },
+        "1150X5":  { group: "A", frontBays: 8,  comboBays: 4, rearU2Bays: 0, slots: "8 front SATA + 4 front SATA/U.2 (max 12 disks)", dimm: "Supports 2 / 4 / 8 DIMMs per node.", pcieAddonSlots: 2 },
+        "1210W":   { group: "A", frontBays: 10, comboBays: 2, rearU2Bays: 0, slots: "10 front SATA + 2 front SATA/U.2 (max 12 disks)", dimm: "Supports 2 / 4 / 6 / 8 / 12 / 16 DIMMs per node.", pcieAddonSlots: 2 },
+        "1210X5":  { group: "A", frontBays: 10, comboBays: 2, rearU2Bays: 0, slots: "10 front SATA + 2 front SATA/U.2 (max 12 disks)", dimm: "Supports 2 / 4 / 8 DIMMs per node.", pcieAddonSlots: 2 },
+        "1250W":   { group: "B", frontBays: 12, comboBays: 0, rearU2Bays: 2, slots: "12 SATA + 2 rear U.2 (max 14 disks)", dimm: "Supports 2 / 4 / 8 / 12 / 16 / 24 / 32 DIMMs per node.", pcieAddonSlots: 2 },
+        "1250X5":  { group: "B", frontBays: 12, comboBays: 0, rearU2Bays: 2, slots: "12 SATA + 2 rear U.2 (max 14 disks)", dimm: "Supports 2 / 4 / 8 / 12 / 16 / 24 / 32 DIMMs per node.", pcieAddonSlots: 2 },
+        "3650W":   { group: "D", frontBays: 36, comboBays: 0, rearU2Bays: 4, slots: "36 SATA + 4 rear U.2 (max 40 disks)", dimm: "Supports 2 / 4 / 8 / 12 / 16 / 24 / 32 DIMMs per node. 4U chassis, base memory ≥128GB.", extraNic: true, pcieAddonSlots: 2 },
+        "3650X5":  { group: "D", frontBays: 36, comboBays: 0, rearU2Bays: 4, slots: "36 SATA + 4 rear U.2 (max 40 disks)", dimm: "Supports 2 / 4 / 8 / 12 / 16 / 24 / 32 DIMMs per node. 4U chassis, base memory ≥128GB.", pcieAddonSlots: 2 }
     };
+
+    // Data disks (SATA HDD) can only go in frontBays + comboBays — rear U.2 bays are NVMe-only.
+    // This is the fix for the 3650-X5 bug: 36 SATA + 4 rear-U.2 (NVMe-only) = 40 physical bays TOTAL,
+    // but only 36 of them can ever hold an HDD data disk. Treating "40" as the data-disk ceiling is wrong.
+    function maxDataBays(model) {
+        const info = MODEL_INFO[model];
+        return info.frontBays + info.comboBays;
+    }
+    // Total physical bays (data + cache combined) actually present in the chassis.
+    function maxTotalBays(model) {
+        const info = MODEL_INFO[model];
+        return info.frontBays + info.comboBays + info.rearU2Bays;
+    }
 
     // Memory lookup table (from the Excel memory configuration requirements table)
     // vals index: [0]=Indep-Basic [1]=Indep-Metadata [2]=Indep-HDFS [3]=Indep-HDFS+Meta
@@ -514,12 +551,32 @@
     let lastRaw = 0;
     let lastUsable = 0;
 
+    // Aggregated hardware-feasibility state, refreshed on every recalc and surfaced in the BOM summary.
+    const slotState = {
+        diskBayError: null,   // data disks/node exceed HDD-capable bays
+        totalBayError: null,  // data+cache disks/node exceed total physical bays
+        memoryError: null,    // required memory exceeds max deliverable DIMM config
+        pcieError: null       // add-on NICs needed exceed available PCI-e slots
+    };
+
+    function renderFinalWarnings() {
+        const box = document.getElementById('finalWarnings');
+        if (!box) return;
+        const errs = [slotState.diskBayError, slotState.totalBayError, slotState.memoryError, slotState.pcieError].filter(Boolean);
+        if (errs.length === 0) { box.innerHTML = ""; return; }
+        box.innerHTML = `<div class="alert alert-err"><strong>⚠ This configuration is NOT deliverable as specified — ${errs.length} hardware limit${errs.length > 1 ? 's' : ''} exceeded:</strong><ul style="margin:8px 0 0 18px; padding:0;">`
+            + errs.map(e => `<li>${e}</li>`).join("")
+            + `</ul></div>`;
+    }
+
     window.onload = function () {
         onStorageTypeChange();
         const model = document.getElementById('serverModel').value;
         const info = MODEL_INFO[model];
         document.getElementById("modelSlotNote").innerText = "Disk bays: " + info.slots;
         document.getElementById('modelDimmNote').innerText = info.dimm;
+        const pcieInput = document.getElementById('pcieAvailable');
+        if (pcieInput) pcieInput.value = info.pcieAddonSlots;
         recalcNetwork();
     };
 
@@ -678,9 +735,27 @@
 
         const adjTotal = perNode * nodeCount;
 
+        // --- Enforce physical disk bay limits (this is the check that catches the old 3650-X5 bug) ---
+        const model = document.getElementById('serverModel').value;
+        const dataBayLimit = maxDataBays(model);
+        const perNodeEl = document.getElementById('outDataDisksPerNode');
+        const adjTotalEl = document.getElementById('outAdjTotalDataDisks');
+
+        if (perNode > dataBayLimit) {
+            const minNodesNeeded = Math.ceil(disksNeeded / dataBayLimit);
+            slotState.diskBayError = `<strong>Data disks/node (${perNode}) exceed the ${dataBayLimit} HDD-capable bays on ${model}</strong> `
+                + `(${MODEL_INFO[model].slots}; rear/U.2-only bays cannot hold a SATA HDD data disk). `
+                + `Increase the cluster to at least ${minNodesNeeded} nodes, choose a larger data disk size, or select a model with more bays.`;
+            noteHtml += `<div class="alert alert-err">⚠ ${perNode} disks/node exceeds this model's ${dataBayLimit}-bay HDD capacity. See Section 7 summary for options.</div>`;
+        } else {
+            slotState.diskBayError = null;
+        }
+        perNodeEl.classList.toggle('value-err', perNode > dataBayLimit);
+        adjTotalEl.classList.toggle('value-err', perNode > dataBayLimit);
+
         document.getElementById('outTotalDataDisks').innerText = disksNeeded;
-        document.getElementById('outDataDisksPerNode').innerText = perNode;
-        document.getElementById('outAdjTotalDataDisks').innerText = adjTotal;
+        perNodeEl.innerText = perNode;
+        adjTotalEl.innerText = adjTotal;
         document.getElementById('dataDiskNote').innerHTML = noteHtml;
 
         recalcCacheAndMemory(adjTotal, raw, usable, perNode);
@@ -692,6 +767,16 @@
         const cacheCount = Math.min(4, Math.max(1, parseInt(document.getElementById('cacheDiskCount').value) || 1));
         const cacheSize = parseFloat(document.getElementById('cacheDiskSize').value) || 0;
         const dataDiskSize = parseFloat(document.getElementById('dataDiskSize').value) || 1;
+
+        // --- Enforce total physical bay limit (data + cache disks together must fit in the chassis) ---
+        const model = document.getElementById('serverModel').value;
+        const totalBayLimit = maxTotalBays(model);
+        const baysUsed = dataDisksPerNode + cacheCount;
+        if (baysUsed > totalBayLimit) {
+            slotState.totalBayError = `<strong>Data + cache disks/node (${dataDisksPerNode} + ${cacheCount} = ${baysUsed}) exceed the ${totalBayLimit} total physical bays on ${model}</strong> (${MODEL_INFO[model].slots}). Reduce cache disk count/node, increase node count, or choose a model with more bays.`;
+        } else {
+            slotState.totalBayError = null;
+        }
 
         let ratioNote = "";
         if (type === 'block') {
@@ -833,8 +918,20 @@
         if (actualDimms === undefined) actualDimms = steps[steps.length - 1];
         const actualGb = actualDimms * 32;
 
-        document.getElementById('outMemPerNode').innerText = reqGb + " GB";
-        document.getElementById('outMemActual').innerText = actualGb + " GB (" + actualDimms + " x 32GB DIMM)";
+        // --- Enforce DIMM slot ceiling: if even the max valid DIMM step can't cover the requirement, this is
+        // a hard error, not something to silently under-deliver on.
+        const memPerNodeEl = document.getElementById('outMemPerNode');
+        const memActualEl = document.getElementById('outMemActual');
+        if (actualGb < reqGb) {
+            slotState.memoryError = `<strong>Required memory (${reqGb}GB/node) exceeds the maximum deliverable on ${model}</strong> — its DIMM slots max out at ${actualGb}GB (${actualDimms} x 32GB). Select a model with more DIMM slots, or reduce cache disk count / SMB client count / feature load.`;
+            memActualEl.classList.add('value-err');
+        } else {
+            slotState.memoryError = null;
+            memActualEl.classList.remove('value-err');
+        }
+
+        memPerNodeEl.innerText = reqGb + " GB";
+        memActualEl.innerText = actualGb + " GB (" + actualDimms + " x 32GB DIMM)";
         document.getElementById('outMemTotal').innerText = (actualGb * nodeCount) + " GB";
         document.getElementById('memWarning').innerHTML = memWarn;
         document.getElementById('sumMem').innerText = actualGb + " GB/node (" + actualDimms + " x 32GB)";
@@ -868,6 +965,8 @@
         const info = MODEL_INFO[model];
         document.getElementById("modelSlotNote").innerText = "Disk bays: " + info.slots;
         document.getElementById('modelDimmNote').innerText = info.dimm;
+        const pcieInput = document.getElementById('pcieAvailable');
+        if (pcieInput) pcieInput.value = info.pcieAddonSlots;
         recalcMemory();
         recalcNetwork();
         // refresh full chain to update summary
@@ -880,7 +979,10 @@
         const model = document.getElementById('serverModel').value;
         const info = MODEL_INFO[model];
 
-        let switches = 2, lcCables = 0, mpo = 0, nic = "", modules = "", scenarioLabel = "";
+        const pcieNoteEl = document.getElementById('pcieAvailableNote');
+        if (pcieNoteEl) pcieNoteEl.innerHTML = `Not published in the EDS Selection Guide — placeholder default for ${model} shown above. Confirm the real available-slot count against the official Sangfor hardware BOM/quotation sheet before finalizing.`;
+
+        let switches = 2, lcCables = 0, mpo = 0, nic = "", modules = "", scenarioLabel = "", addOnNics = 0;
 
         if (scenario === 's1') {
             scenarioLabel = "10GE switch pair (business + storage private, shared)";
@@ -888,6 +990,7 @@
             const mods10g = nodeCount * 8 + 4;
             modules = `${mods10g} x 10G optical modules`;
             nic = "2x dual-port 10GbE NIC/node (standard)" + (info.extraNic ? " + 1x additional dual-port 10GbE NIC/node (required for this model)" : "");
+            addOnNics = info.extraNic ? 1 : 0;
             document.getElementById('netFormulaNote').innerHTML =
                 `<strong>Scenario 1 formulas:</strong><br>LC-LC cables = Nodes×4+2<br>10G modules = Nodes×8+4<br>Switches = 2x 10GE (shared business+storage)<br>NIC: standard 2x dual-port 10GbE/node; 3650W/3650-X5 need +1 additional dual-port 10GbE NIC/node.`;
         } else if (scenario === 's2') {
@@ -898,6 +1001,7 @@
             const mods25g = nodeCount * 4;
             modules = `${mods10g} x 10G modules + ${mods25g} x 25G modules + 4 x 100G modules (switch interconnect)`;
             nic = `${nodeCount} x 25G NIC (1 per node)`;
+            addOnNics = 1;
             document.getElementById('netFormulaNote').innerHTML =
                 `<strong>Scenario 2 formulas:</strong><br>LC-LC cables = Nodes×4<br>MPO cables = 2 (switch interconnect)<br>10G modules = Nodes×4, 25G modules = Nodes×4, 100G modules = 4<br>25G NIC = Nodes×1<br>Recommend Huawei 25GE switches / MPO cabling / 100G modules if RoCEv2 support cannot be confirmed on customer switches.`;
         } else {
@@ -907,6 +1011,7 @@
             const mods25g = nodeCount * 8;
             modules = `${mods25g} x 25G modules + 4 x 100G modules (switch interconnect)`;
             nic = `${nodeCount * 2} x 25G NIC (2 per node)`;
+            addOnNics = 2;
             document.getElementById('netFormulaNote').innerHTML =
                 `<strong>Scenario 3 formulas:</strong><br>LC-LC cables = Nodes×4<br>MPO cables = 2 (switch interconnect)<br>25G modules = Nodes×8, 100G modules = 4<br>25G NIC = Nodes×2<br>Recommend Huawei 25GE switches / MPO cabling / 100G modules if RoCEv2 support cannot be confirmed on customer switches.`;
         }
@@ -920,6 +1025,33 @@
         const rowMpo = document.getElementById('rowSumMpo');
         if (mpo > 0) { rowMpo.style.display = 'flex'; document.getElementById('sumMpo').innerText = mpo; }
         else { rowMpo.style.display = 'none'; }
+
+        // --- PCI-e expansion slot check (add-on NIC cards vs. available slots) ---
+        const pcieAvailable = parseInt(document.getElementById('pcieAvailable').value);
+        document.getElementById('pcieNeeded').innerText = addOnNics + " card" + (addOnNics === 1 ? "" : "s");
+        document.getElementById('pcieAvail').innerText = isNaN(pcieAvailable) ? "-" : pcieAvailable;
+
+        const pcieWarnBox = document.getElementById('pcieWarning');
+        const pcieNeededEl = document.getElementById('pcieNeeded');
+        if (!isNaN(pcieAvailable) && addOnNics > pcieAvailable) {
+            slotState.pcieError = `<strong>Add-on NIC cards needed/node (${addOnNics}) exceed the ${pcieAvailable} available PCI-e slot(s) entered for ${model}</strong> — verify the real slot count for this model, reconsider the network scenario, or select a model with more PCI-e expansion capacity.`;
+            pcieWarnBox.innerHTML = `<div class="alert alert-err">⚠ ${addOnNics} add-on NIC card(s) needed but only ${pcieAvailable} PCI-e slot(s) marked available.</div>`;
+            pcieNeededEl.classList.add('value-err');
+        } else {
+            slotState.pcieError = null;
+            pcieWarnBox.innerHTML = "";
+            pcieNeededEl.classList.remove('value-err');
+        }
+
+        // Reflect any active hardware-limit errors onto the relevant summary values, then render the rollup banner.
+        const sumDataDisksEl = document.getElementById('sumDataDisks');
+        const sumMemEl = document.getElementById('sumMem');
+        const sumNicEl = document.getElementById('sumNic');
+        if (sumDataDisksEl) sumDataDisksEl.classList.toggle('value-err', !!(slotState.diskBayError || slotState.totalBayError));
+        if (sumMemEl) sumMemEl.classList.toggle('value-err', !!slotState.memoryError);
+        if (sumNicEl) sumNicEl.classList.toggle('value-err', !!slotState.pcieError);
+
+        renderFinalWarnings();
     }
 
     function renderSummary(adjTotalDataDisks, cacheCount, raw, usable) {
