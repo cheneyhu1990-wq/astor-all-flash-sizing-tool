@@ -161,10 +161,10 @@
     <header>
         <div>
             <h1>Sangfor aStor-EDS All-Flash Sizing Tool</h1>
-            <div class="subtitle">Configuration &amp; Capacity Calculator — Web Edition v3.0</div>
+            <div class="subtitle">Configuration &amp; Capacity Calculator — Web Edition v4.0</div>
         </div>
         <div style="text-align:right;">
-            <span style="font-size: 0.8rem; color: #666;">Logic aligned with EDS V5.3 Selection Guide<br>(内部选型指导工具 V4.2)</span>
+            <span style="font-size: 0.8rem; color: #666;">Logic aligned with EDS V5.3.2 Selection Guide<br>(Sangfor aStor V5.3.2 Selection Tool, dated 2026-09-11)</span>
         </div>
     </header>
 
@@ -182,11 +182,11 @@
             </div>
             <div>
                 <label for="modelType">Controller Performance Tier</label>
-                <select id="modelType" onchange="recalcAll()">
+                <select id="modelType" onchange="onModelTypeChange()">
                     <option value="3000">3000 Series (Standard)</option>
                     <option value="6000">6000 Series (High Performance)</option>
                 </select>
-                <div class="note">F3000: base 128GB/chassis (64GB/controller). F6000: base 256GB/chassis (128GB/controller).</div>
+                <div class="note">F3000: base 64GB/controller. F6000: base 128GB/controller (V5.3.2 memory tiers, see Step 4).</div>
             </div>
             <div>
                 <label for="chassisCount">Number of Chassis in Cluster</label>
@@ -211,8 +211,10 @@
             <div>
                 <div class="note" style="margin-top:24px;">
                     The tool scans every valid disk-spec / disk-count / EC combination for this chassis
-                    and returns the lowest-cost <strong>Preferred</strong> option (larger disks &amp; higher EC ratio preferred)
-                    plus a <strong>Alternate</strong> option using a different disk spec.
+                    (using the highest feasible EC ratio for each disk count) and returns the lowest relative-cost
+                    <strong>Preferred</strong> option, plus an <strong>Alternate</strong> option using a different disk spec.
+                    Relative cost coefficients (3.84T=1 / 7.68T=1.949 / 15.36T=7.6979 for T-series; 15.36T=1 / 30.72T=1.7319 for Q-series)
+                    are taken directly from the V5.3.2 guide.
                 </div>
             </div>
         </div>
@@ -295,25 +297,56 @@
 
     <!-- STEP 4: Memory -->
     <div class="card">
-        <h2><span class="step-badge">4</span> Memory Sizing</h2>
-        <div class="grid-3">
+        <h2><span class="step-badge">4</span> Memory Sizing <span class="note" style="font-weight:normal;">(per-controller tier: 64 / 128 / 256 / 512 GB)</span></h2>
+        <div class="alert alert-blue">
+            V5.3.2 sizes memory per controller by tier, driven by enabled features and per-protocol connection counts — it no longer keys off data-disk capacity.
+            Enter cluster-wide connection counts per protocol (0 = not used); the tool divides by controller count and finds the lowest tier that satisfies every input.
+        </div>
+        <div class="grid-4">
             <div>
-                <label for="smbClients">Concurrent SMB Client Connections (cluster-wide)</label>
+                <label for="smbClients">SMB connections (cluster-wide)</label>
                 <input type="number" id="smbClients" value="0" min="0" oninput="computeMemory()">
-                <div class="note" id="perControllerNote">Per-controller = total ÷ chassis ÷ 2 controllers</div>
+            </div>
+            <div>
+                <label for="ftpClients">FTP connections (cluster-wide)</label>
+                <input type="number" id="ftpClients" value="0" min="0" oninput="computeMemory()">
+            </div>
+            <div>
+                <label for="nfsClients">NFS connections (cluster-wide)</label>
+                <input type="number" id="nfsClients" value="0" min="0" oninput="computeMemory()">
+            </div>
+            <div>
+                <label for="nfsRdmaClients">NFS-over-RDMA connections (cluster-wide)</label>
+                <input type="number" id="nfsRdmaClients" value="0" min="0" oninput="computeMemory()">
+            </div>
+            <div>
+                <label for="blockClients">Block storage connections — iSCSI / NVMe-oF (cluster-wide)</label>
+                <input type="number" id="blockClients" value="0" min="0" oninput="computeMemory()">
             </div>
             <div>
                 <div class="checkbox-group" style="margin-top:24px;">
-                    <input type="checkbox" id="featureFlags" onchange="computeMemory()">
-                    <label for="featureFlags" style="margin-bottom:0;">Data-copy features enabled (archive / load / replicate)</label>
+                    <input type="checkbox" id="smb1Enabled" onchange="computeMemory()">
+                    <label for="smb1Enabled" style="margin-bottom:0;">SMB1 required</label>
                 </div>
-                <div class="note">Requires ≥128GB per controller regardless of client count.</div>
+                <div class="note">Not supported at 64GB/controller.</div>
             </div>
             <div>
-                <div class="note" style="margin-top:24px;" id="diskMemNote">Data disk spec is auto-checked against the ≥15.36TB → ≥128GB/controller rule.</div>
+                <div class="checkbox-group" style="margin-top:24px;">
+                    <input type="checkbox" id="advDataServices" onchange="computeMemory()">
+                    <label for="advDataServices" style="margin-bottom:0;">Data mgmt/copy, unified view, or data-branch mgmt</label>
+                </div>
+                <div class="note">Requires ≥128GB/controller.</div>
+            </div>
+            <div>
+                <div class="checkbox-group" style="margin-top:24px;">
+                    <input type="checkbox" id="vectorStorage" onchange="computeMemory()" disabled>
+                    <label for="vectorStorage" id="vectorStorageLabel" style="margin-bottom:0;">Vector storage enabled</label>
+                </div>
+                <div class="note" id="vectorStorageNote">X86 F6000T only. Requires ≥128GB/controller; at exactly 128GB it is mutually exclusive with FTP and SMB1.</div>
             </div>
         </div>
         <table style="margin-top:15px;"><tbody id="memoryResultBody"></tbody></table>
+        <div id="memoryVerdicts" style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;"></div>
     </div>
 
     <!-- STEP 5: Network -->
@@ -327,7 +360,7 @@
                     <option value="HBA">HBA (FC, LC-LC fiber) — T-series only</option>
                     <option value="10G">10GbE NIC (LC-LC fiber + optics)</option>
                 </select>
-                <div class="note">Q-series does not support HBA uplinks.</div>
+                <div class="note" id="uplinkTypeNote">Q-series does not support HBA uplinks.</div>
             </div>
             <div>
                 <label for="uplinkCount">Business NICs/HBAs (total in cluster)</label>
@@ -375,16 +408,16 @@
         </div>
 
         <div class="alert alert-blue" style="margin-top: 20px;" id="licenseNote">
-            <strong>Licensing Guide:</strong><br>
-            • F3000T → Balanced All-Flash License (均衡型全闪存储授权)<br>
-            • F6000T → Performance All-Flash License (性能型全闪存储授权)<br>
-            • F3000Q / F6000Q → Capacity All-Flash License (容量型全闪存储授权)<br>
+            <strong>Licensing Guide (V5.3.2):</strong><br>
+            • F3000T → Balanced All-Flash License<br>
+            • F6000T → Performance All-Flash License<br>
+            • F3000Q / F6000Q → Capacity All-Flash License<br>
             License capacity is evaluated on <strong>data-disk raw capacity only</strong> (cache disks excluded). Required total license capacity ≥ sum of raw capacity of all data disks in the cluster. Licenses can be stacked/combined.
         </div>
     </div>
 
     <footer>
-        Generated by Sangfor aStor-EDS Sizing Assistant · Sizing logic mirrors the official EDS V5.3 Selection Guide (Excel V4.2) · Internal use for pre-sales &amp; enablement only
+        Generated by Sangfor aStor-EDS Sizing Assistant · Sizing logic mirrors the official EDS V5.3.2 Selection Guide (dated 2026-09-11) · Internal use for pre-sales &amp; enablement only
     </footer>
 </div>
 
@@ -393,19 +426,19 @@
    CONSTANTS — mirror the Excel workbook exactly
    ============================================================ */
 const T_SPECS   = [3.84, 7.68, 15.36];
-const T_COEFF   = {3.84: 1, 7.68: 1.68, 15.36: 2.09};
+const T_COEFF   = {3.84: 1, 7.68: 1.949, 15.36: 7.6979};   // relative per-disk cost coefficient, V5.3.2 guide
 const T_EC      = [4, 8, 12, 16, 20];      // N values; EC = N+2
 const T_RANGE   = [8, 24];
 
 const Q_SPECS   = [15.36, 30.72];
-const Q_COEFF   = {15.36: 1, 30.72: 1.846};
+const Q_COEFF   = {15.36: 1, 30.72: 1.7319};               // relative per-disk cost coefficient, V5.3.2 guide
 const Q_EC      = [4, 8, 12, 16];          // Q-series never supports EC20+2
 const Q_RANGE   = [8, 20];                  // max 20 data disks (4 slots reserved for cache)
 
 const CACHE_PAIR = {15.36: 3.84, 30.72: 7.68};
 
 /* ============================================================
-   CORE CAPACITY MATH (Sheet "1.数据盘选型工具")
+   CORE CAPACITY MATH (Sheet 1: Data Disk Selection Tool)
    ============================================================ */
 function usableFromRaw(rawTB, N) {
     // Usable(TiB) = (Raw*931/1024*0.9 - 0.352) * N/(N+2)
@@ -492,6 +525,12 @@ function onSeriesChange() {
     }
 
     selectedConfig = null;
+    onModelTypeChange();
+}
+
+function onModelTypeChange() {
+    updateVectorStorageAvailability();
+    computeNetwork();
     recalcAll();
 }
 
@@ -500,9 +539,23 @@ function recalcAll() {
     renderManualTable();
     updateSelectedConfigBox();
     computeCache();
+    updateVectorStorageAvailability();
     computeMemory();
     computeNetwork();
     computeSummary();
+}
+
+function updateVectorStorageAvailability() {
+    // Per V5.3.2 guide: vector storage is only offered on the X86 F6000T (not F3000, not Q-series)
+    const series = currentSeries();
+    const modelType = document.getElementById('modelType').value;
+    const eligible = series === 'T' && modelType === '6000';
+    const box = document.getElementById('vectorStorage');
+    box.disabled = !eligible;
+    if (!eligible) box.checked = false;
+    document.getElementById('vectorStorageNote').textContent = eligible
+        ? 'Requires ≥128GB/controller; at exactly 128GB it is mutually exclusive with FTP and SMB1.'
+        : 'X86 F6000T only — not available for F3000 or Q-series models.';
 }
 
 /* ============================================================
@@ -647,7 +700,7 @@ function updateSelectedConfigBox() {
 
 /* ============================================================
    STEP 3 — Q-SERIES CACHE DISK / FILE-COUNT CHECK
-   (Sheet "3.Q系列型号器缓存盘选型说明")
+   (Sheet 3: Q-Series Cache Disk Selection Guide)
    ============================================================ */
 function metadataSizeKB(avgKB) {
     if (avgKB <= 32) return 0.9;
@@ -684,7 +737,7 @@ function computeCache() {
     const J_qlcPhysical = dataCount * dataSpec * Math.pow(1000, 4) / Math.pow(1024, 4);
     const K_qlcLogical = J_qlcPhysical * 0.9 * N / (N + 2);
 
-    // File-count capacity (in 亿 = 100 million files)
+    // File-count capacity (in units of 100 million files)
     const L_cacheFileCount = H_tlcLogical * 0.9 * Math.pow(1024, 3) / I_metaKB / 10000 / 10000 / 2;
     const M_dataFileCount = K_qlcLogical * 0.95 * Math.pow(1024, 3) / avgFileKB / 10000 / 10000;
 
@@ -710,54 +763,78 @@ function computeCache() {
 }
 
 /* ============================================================
-   STEP 4 — MEMORY SIZING (Sheet "⭐2.软硬件选型说明" + "2-1.内存选型说明")
+   STEP 4 — MEMORY SIZING (Sheet 2-1: Memory Selection Guide (New), V5.3.2)
+   Per-controller memory tiers: 64 / 128 / 256 / 512 GB.
+   Limits below are transcribed directly from the V5.3.2 table;
+   256GB and 512GB carry identical documented limits.
    ============================================================ */
+function tierLimits(tier, vectorOn) {
+    if (tier === 64)  return { smb: 250, ftp: 125, nfs: 500,  nfsRdma: 250, block: 500,  smb1: false, adv: false, vector: false };
+    if (tier === 128) return { smb: vectorOn ? 500 : 1000, ftp: 500, nfs: 1000, nfsRdma: 500, block: 2000, smb1: true, adv: true, vector: true };
+    return                   { smb: 2000, ftp: 500, nfs: 1000, nfsRdma: 500, block: 2000, smb1: true, adv: true, vector: true }; // 256 & 512
+}
+
 function computeMemory() {
     const modelType = document.getElementById('modelType').value; // '3000' | '6000'
     const chassisCount = Math.max(1, parseInt(document.getElementById('chassisCount').value) || 1);
+    const controllers = chassisCount * 2;
+
     const totalSmb = parseFloat(document.getElementById('smbClients').value) || 0;
-    const featureEnabled = document.getElementById('featureFlags').checked;
-    const diskSpec = selectedConfig ? selectedConfig.spec : null;
-    const bigDisk = diskSpec !== null && diskSpec >= 15.36;
+    const totalFtp = parseFloat(document.getElementById('ftpClients').value) || 0;
+    const totalNfs = parseFloat(document.getElementById('nfsClients').value) || 0;
+    const totalNfsRdma = parseFloat(document.getElementById('nfsRdmaClients').value) || 0;
+    const totalBlock = parseFloat(document.getElementById('blockClients').value) || 0;
+    const smb1 = document.getElementById('smb1Enabled').checked;
+    const adv = document.getElementById('advDataServices').checked;
+    const vectorBox = document.getElementById('vectorStorage');
+    const vector = vectorBox.checked && !vectorBox.disabled;
 
-    const perController = totalSmb / (chassisCount * 2);
-    document.getElementById('perControllerNote').textContent =
-        `Per-controller ≈ ${fmt(perController, 0)} (total ÷ ${chassisCount} chassis ÷ 2 controllers)`;
-    document.getElementById('diskMemNote').textContent = bigDisk
-        ? `Selected data disk (${diskSpec}TB) is ≥15.36TB → triggers ≥128GB/controller requirement.`
-        : 'Data disk spec < 15.36TB — no memory add-on triggered by disk size alone.';
+    const perSmb = totalSmb / controllers, perFtp = totalFtp / controllers, perNfs = totalNfs / controllers,
+          perNfsRdma = totalNfsRdma / controllers, perBlock = totalBlock / controllers;
 
-    const base = modelType === '3000' ? 64 : 128; // GB per controller
-    let required = base;
-    let triggers = [];
+    // Hardware ships with a minimum standard memory config per performance tier (F3000: 64GB/controller stock,
+    // F6000: 128GB/controller stock) — you cannot size below that even if the workload wouldn't require it.
+    const base = modelType === '3000' ? 64 : 128;
+    const tiers = [64, 128, 256, 512].filter(t => t >= base);
 
-    if (modelType === '3000') {
-        if (perController > 250 && perController < 1000) { required = Math.max(required, 128); triggers.push('SMB 250–1000/controller'); }
-        if (perController > 1000 && perController < 2000) { required = Math.max(required, 256); triggers.push('SMB 1000–2000/controller'); }
-        if (bigDisk) { required = Math.max(required, 128); triggers.push('Data disk ≥15.36TB'); }
-        if (featureEnabled) { required = Math.max(required, 128); triggers.push('Data-copy features'); }
-    } else {
-        if (perController > 1000 && perController < 2000) { required = Math.max(required, 256); triggers.push('SMB 1000–2000/controller'); }
+    let chosen = null, triggers = [];
+    for (const t of tiers) {
+        const lim = tierLimits(t, vector);
+        const fails = [];
+        if (perSmb > lim.smb) fails.push(`SMB (${fmt(perSmb,0)}/ctrl > ${lim.smb})`);
+        if (perFtp > lim.ftp) fails.push(`FTP (${fmt(perFtp,0)}/ctrl > ${lim.ftp})`);
+        if (perNfs > lim.nfs) fails.push(`NFS (${fmt(perNfs,0)}/ctrl > ${lim.nfs})`);
+        if (perNfsRdma > lim.nfsRdma) fails.push(`NFS-RDMA (${fmt(perNfsRdma,0)}/ctrl > ${lim.nfsRdma})`);
+        if (perBlock > lim.block) fails.push(`Block storage (${fmt(perBlock,0)}/ctrl > ${lim.block})`);
+        if (smb1 && !lim.smb1) fails.push('SMB1 not supported');
+        if (adv && !lim.adv) fails.push('Data mgmt/unified view/branch mgmt not supported');
+        if (vector && !lim.vector) fails.push('Vector storage not supported');
+        if (fails.length === 0) { chosen = t; break; }
+        triggers = fails;
     }
 
-    let sticks = 0;
-    if (modelType === '3000') {
-        sticks = required >= 256 ? 12 : (required >= 128 ? 4 : 0);
-    } else {
-        sticks = required >= 256 ? 8 : 0;
-    }
+    let exceeded = false;
+    if (!chosen) { chosen = tiers[tiers.length - 1]; exceeded = true; }
 
-    const totalPerChassis = base * 2 + sticks * 32;
+    const totalPerChassis = chosen * 2;
     const totalCluster = totalPerChassis * chassisCount;
+    const addOnPerController = Math.max(0, chosen - base);
 
-    computeMemory._result = { base, required, sticks, totalPerChassis, totalCluster, triggers, chassisCount };
+    computeMemory._result = { base, required: chosen, totalPerChassis, totalCluster, chassisCount };
+
+    const mutualExclusion = (chosen === 128 && vector && (smb1 || totalFtp > 0));
 
     document.getElementById('memoryResultBody').innerHTML = `
-        <tr><th>Base memory (standard config)</th><td>${base * 2} GB/chassis (${base} GB/controller)</td></tr>
-        <tr><th>Required memory tier</th><td>${required} GB/controller ${triggers.length ? '— triggered by: ' + triggers.join(', ') : '(base config sufficient)'}</td></tr>
-        <tr><th>Add-on DIMMs</th><td>${sticks > 0 ? sticks + ' × 32GB per chassis (' + (sticks * chassisCount) + ' total)' : 'None required'}</td></tr>
+        <tr><th>Standard (stock) memory</th><td>${base * 2} GB/chassis (${base} GB/controller)</td></tr>
+        <tr><th>Required memory tier</th><td><strong>${chosen} GB/controller</strong>${exceeded ? ' — exceeds documented V5.3.2 limits; escalate to product line' : ''}</td></tr>
+        <tr><th>Additional memory to add</th><td>${addOnPerController > 0 ? `${addOnPerController} GB/controller (${addOnPerController * controllers} GB cluster-wide) — DIMM population is chassis-specific; confirm slot layout with the hardware spec sheet` : 'None — standard config is sufficient'}</td></tr>
         <tr><th>Total memory / chassis</th><td><strong>${totalPerChassis} GB</strong></td></tr>
         <tr><th>Total memory — cluster (${chassisCount} chassis)</th><td><strong>${totalCluster} GB</strong></td></tr>
+    `;
+
+    document.getElementById('memoryVerdicts').innerHTML = `
+        ${mutualExclusion ? '<span class="tag tag-warn">At 128GB, vector storage cannot be enabled together with FTP or SMB1 — upgrade to 256GB to run all simultaneously</span>' : ''}
+        ${exceeded ? `<span class="tag tag-err">Workload exceeds the highest documented tier for: ${triggers.join(', ')}</span>` : ''}
     `;
 
     computeSummary();
@@ -769,9 +846,13 @@ function computeMemory() {
 function computeNetwork() {
     const chassisCount = Math.max(1, parseInt(document.getElementById('chassisCount').value) || 1);
     const totalControllers = chassisCount * 2;
-    const uplinkType = document.getElementById('uplinkType').value;
-    let uplinkCount = parseInt(document.getElementById('uplinkCount').value) || 0;
+    const uplinkTypeSelect = document.getElementById('uplinkType');
+    const uplinkCountInput = document.getElementById('uplinkCount');
+    const uplinkType = uplinkTypeSelect.value;
 
+    document.getElementById('uplinkTypeNote').textContent = 'Q-series does not support HBA uplinks.';
+
+    let uplinkCount = parseInt(uplinkCountInput.value) || 0;
     const minUplink = chassisCount === 1 ? 2 : totalControllers;
     document.getElementById('uplinkMinNote').textContent = `Leave at 0 to auto-fill the minimum recommended count (${minUplink}).`;
     if (uplinkCount <= 0) uplinkCount = minUplink;
@@ -803,7 +884,7 @@ function computeNetwork() {
         uplinkLabel = 'HBA (LC-LC fiber, modules built-in)';
     } else {
         uplinkCables = uplinkCount * 2; uplinkModules = uplinkCount * 4;
-        uplinkLabel = '10GbE NIC (LC-LC fiber + 10G optical modules)';
+        uplinkLabel = '10GbE/25G NIC (LC-LC fiber + optical modules)';
     }
 
     computeNetwork._result = { net, uplinkType, uplinkLabel, uplinkCount, uplinkCables, uplinkModules };
