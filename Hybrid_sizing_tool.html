@@ -654,7 +654,13 @@
 
         tbody.innerHTML = "";
         const strategies = type === 'file' ? FILE_STRATEGIES : BLOCK_STRATEGIES;
+        // Preserve the user's current strategy across rebuilds (falls back to first option,
+        // e.g. when switching between File and Block storage where names differ)
         let defaultIndex = 0;
+        if (selectedStrategy) {
+            const keepIdx = strategies.findIndex(s => s.name === selectedStrategy.name);
+            if (keepIdx >= 0) defaultIndex = keepIdx;
+        }
 
         strategies.forEach((strat, index) => {
             const ratio = strat.d / (strat.d + strat.p);
